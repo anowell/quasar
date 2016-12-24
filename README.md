@@ -16,12 +16,14 @@ Oh, and black hole's form from the collapse of a core of iron.. you know, the on
 
 ## Current Status
 
-Only a couple things work, and everything about this is subject to change. That said, given a template like this:
+Only a couple things work, and everything about this is subject to change. That said, given an HTML file like this:
 
 ```html
-<body>
-  <Reverser></Reverser>
-</body>
+<html>
+  <body>
+    <Reverser></Reverser>
+  </body>
+</html>
 ```
 
 You can bind and update data with a snippet like this:
