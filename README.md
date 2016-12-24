@@ -14,4 +14,38 @@ Oh, and black hole's form from the collapse of a core of iron.. you know, the on
 
 ---
 
-TODO: add some design goals/decisions and basic usage/examples (once any of that becomes clear to me). 
+## Current Status
+
+Only a couple things work, and everything about this is subject to change. That said, given a template like this:
+
+```html
+<body>
+  <Reverser></Reverser>
+</body>
+```
+
+You can bind and update data with a snippet like this:
+
+```rust
+fn main() {
+    let mut qdom = quasar::init();
+
+    let my_widget = Component {
+        data: ReverseData{
+            message: "Hello World".to_owned()
+        },
+        template: compile_str(r##"
+            <p>{{ message }}</p>
+            <button>Reverse Message</button>
+        "##).expect("failed to compile template")
+    };
+
+    let view = qdom.render(my_widget, "Reverser");
+    view.on(EventType::Click, |ref mut data| {
+        println!("on click called");
+        data.message = data.message.chars().rev().collect::<String>();
+    });
+}
+```
+
+That's all for now.
