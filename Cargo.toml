@@ -1,0 +1,9 @@
+[package]
+name = "quasar"
+version = "0.1.0"
+authors = ["Anthony Nowell <anthony@algorithmia.com>"]
+
+[dependencies]
+mustache = "0.8.0"
+webplatform = "0.4.2"
+rustc-serialize = "0.3.18"
