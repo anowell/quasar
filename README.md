@@ -1,6 +1,6 @@
 # Quasar
 
-An experimental rust-to-{wasm,asmjs} frontend framework. 
+An experimental rust-to-{wasm,asmjs} frontend framework.
 
 ---
 
@@ -21,7 +21,8 @@ Only a couple things work, and everything about this is subject to change. That 
 ```html
 <html>
   <body>
-    <Reverser></Reverser>
+    <Reverser name="Malcom Reynolds"></Reverser>
+    <Reverser name="Shepherd Book"></Reverser>
   </body>
 </html>
 ```
@@ -36,14 +37,15 @@ fn main() {
         data: ReverseData{
             message: "Hello World".to_owned()
         },
+        props: vec!["name"],
         template: compile_str(r##"
-            <p>{{ message }}</p>
+            <p>{{props.name}}, {{ message }}</p>
             <button>Reverse Message</button>
-        "##).expect("failed to compile template")
+        "##).expect("failed to compile my_widget template")
     };
 
-    let view = qdom.render(my_widget, "Reverser");
-    view.on(EventType::Click, |ref mut data| {
+    let views = qdom.render(my_widget, "Reverser");
+    views.on(EventType::Click, |ref mut data| {
         println!("on click called");
         data.message = data.message.chars().rev().collect::<String>();
     });
@@ -51,3 +53,14 @@ fn main() {
 ```
 
 That's all for now.
+
+## What's next?
+
+Right now, almost everything is experimental, working to better understand what works and what's missing in [webplatform](https://github.com/tcr/rust-webplatform). Here are some overarching questions that are guiding this experimentation right now:
+
+- Can we achieve a level of abstractions that feel comparable to modern javascript frameworks?
+- What might it look like to have "isomorphic" rust, where the same rendering code can run both client and server side?
+- What might a modular, trait-based templating engine look like?
+
+Admittedly Quasar is absent any perf goals, but more importantly, Quasar lacks a compelling vision for why Quasar would be better than X, so I'll probably ask myself "what problem is Quasar really solving?" multiple times throughout this experimentation.
+

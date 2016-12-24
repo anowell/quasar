@@ -13,18 +13,20 @@ fn main() {
     let mut qdom = quasar::init();
 
     let my_widget = Component {
-        data: ReverseData{
+        data: ReverseData {
             message: "Hello World".to_owned()
         },
+        props: vec!["something"],
+        // methods: vec![leftpad, reverse, slugify],
         template: compile_str(r##"
-            <p>{{ message }}</p>
+            <p>{{ props.something }}, {{ message }}</p>
             <button>Reverse Message</button>
-        "##).expect("failed to compile template")
+        "##).expect("failed to compile my_widget template")
     };
 
-    let view = qdom.render(my_widget, "Reverser");
+    let views = qdom.render(my_widget, "Reverser");
 
-    view.on(EventType::Click, |ref mut data| {
+    views.on(EventType::Click, |ref mut data| {
         println!("on click called");
         data.message = data.message.chars().rev().collect::<String>();
     });
