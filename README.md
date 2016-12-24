@@ -6,7 +6,7 @@ An experimental rust-to-{wasm,asmjs} frontend framework.
 
 Supermassive black holes exist at the center of most observed galaxies, but there is much about them that remains a mystery. It is believed that rapidly adding sufficient matter to a supermassive black hole's accretion disk results in becoming a quasar that emits enormous amounts of electromagnetic energy as matter via astrophysical jets perpendicular to the black hole's spin. These jets can emit matter at nearly lightspeed and stretch hundreds of thousands of light years across a galaxy.
 
-WASM is at the center of an upcoming shift in web development, but there is still much about that shift that remains a mystery. Some believe Rust, as an early mover, and with zero-cost abstractions is well-positioned to invest in bytecode that runs on the spinning event loop. It may be possible for Rust to power the fastest applications on the web, becoming highly visible across the frontend ecosystem for years to come.
+WASM is at the center of an upcoming shift in web development, but there is still much about that shift that remains a mystery. Some believe Rust, as an early mover, and with zero-cost abstractions is well-positioned to invest in bytecode that spins up on the event loop. It may be possible for Rust to power the fastest applications on the web, becoming highly visible across the frontend ecosystem for years to come.
 
 Oh, and black hole's form from the collapse of a core of iron.. you know, the only element that rusts.
 
