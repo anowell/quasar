@@ -1,30 +1,31 @@
 extern crate quasar;
 extern crate rustc_serialize;
 
-use quasar::{EventType};
+use quasar::{compile_str, Component, EventType};
 
 #[derive(RustcEncodable)]
 struct ReverseData {
     message: String,
 }
 
+
 fn main() {
-    let mut app = quasar::init();
+    let mut qdom = quasar::init();
 
-    let data = ReverseData{ message: "Initial Message".to_owned() };
-    let view = app.bind("#reverser", data);
+    let my_widget = Component {
+        data: ReverseData{
+            message: "Hello World".to_owned()
+        },
+        template: compile_str(r##"
+            <p>{{ message }}</p>
+            <button>Reverse Message</button>
+        "##).expect("failed to compile template")
+    };
 
-    // let view: View<ReverserData> = app.view("#reverser").unwrap()
+    let view = qdom.render(my_widget, "Reverser");
 
-    // This is basically useless, since we're
-    // blocking the event loop until `app` drops
-    view.update( |ref mut data| {
-        println!("{}", data.message);
-        data.message = "Hello World".to_owned();
-    });
-
-    // TODO: subquery via view.query("button").on...
     view.on(EventType::Click, |ref mut data| {
+        println!("on click called");
         data.message = data.message.chars().rev().collect::<String>();
     });
 

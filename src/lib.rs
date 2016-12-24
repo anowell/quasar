@@ -9,12 +9,19 @@ use std::rc::Rc;
 use rustc_serialize::Encodable;
 use webplatform::{Document, HtmlNode};
 
-pub use mustache::{Template};
-
+pub use mustache::{compile_str, Template};
 
 pub struct Component<Data> {
-    template: Template,
-    data: Data,
+    pub template: Template,
+    pub data: Data,
+}
+
+impl <Data: Encodable> Component<Data> {
+    fn render(&self) -> String {
+        let mut output = Vec::new();
+        self.template.render(&mut output, &self.data).expect("failed to render component");
+        String::from_utf8_lossy(&output).into_owned()
+    }
 }
 
 pub enum EventType {
@@ -30,7 +37,8 @@ impl EventType {
 }
 
 pub struct View<'a, 'doc: 'a, Data: 'a> {
-    // document and el are redundant of node, but needed for nested queries
+    // document and el are redundant of node,
+    // but needed for nested queries
     document: &'a Document<'doc>,
     el: String,
 
@@ -90,40 +98,30 @@ impl ViewId {
     }
 }
 
-pub fn init<'a>() -> WebApp<'a> {
-    WebApp {
+pub fn init<'a>() -> QuasarDom<'a> {
+    QuasarDom {
         document: webplatform::init(),
         views: HashMap::new(),
     }
 }
 
-pub struct WebApp<'doc> {
+pub struct QuasarDom<'doc> {
     document: Document<'doc>,
     views: HashMap<ViewId, Box<Any>>,
 }
 
-impl <'a> Drop for WebApp<'a> {
-    fn drop(&mut self) {
-        webplatform::spin();
-    }
-}
 
-impl <'a, 'doc: 'a> WebApp<'doc> {
-    pub fn bind<Data: 'static + Encodable>(&'a mut self, el: &str, data: Data) -> View<'a, 'doc, Data> {
-        let node = self.document.element_query(el).unwrap();
-        let text = node.html_get();
-        let template = mustache::compile_str(&text).unwrap();
+impl <'a, 'doc: 'a> QuasarDom<'doc> {
+    pub fn render<Data: 'static + Encodable>(&'a mut self, component: Component<Data>, el: &str) -> View<'a, 'doc, Data> {
+        let node = self.document.element_query(el).expect("failed to query element");
+        node.html_set(&component.render());
 
         let view_id = ViewId::new::<Data>(el);
-        let component = Component {
-            template: template,
-            data: data,
-        };
-        self.views.insert(view_id, Box::new(Rc::new(RefCell::new(component))));
+        self.views.insert(
+            view_id,
+            Box::new(Rc::new(RefCell::new(component))));
 
-        let view = self.view(el);
-        view.repaint();
-        view
+        self.view(el)
     }
 
     pub fn view<Data: 'static + Encodable>(&'a self, el: &str) -> View<'a, 'doc, Data>  {
@@ -137,20 +135,22 @@ impl <'a, 'doc: 'a> WebApp<'doc> {
             component: component.clone(),
         }
     }
+
+    // pub fn query(&'a self, el: &str) -> Node<'doc>  {
+    //     let node = self.document.element_query(el).unwrap();
+    //     Node {
+    //         node: node,
+    //         el: el.to_owned(),
+    //     }
+    // }
+
+    // pub fn on
 }
 
-impl <Data: Encodable> Component<Data> {
-    fn new(template: Template, data: Data) -> Component<Data> {
-        Component {
-            template: template,
-            data: data,
-        }
-    }
 
-    fn render(&self) -> String {
-        let mut output = Vec::new();
-        self.template.render(&mut output, &self.data).unwrap();
-        String::from_utf8_lossy(&output).into_owned()
+impl <'doc> Drop for QuasarDom<'doc> {
+    fn drop(&mut self) {
+        webplatform::spin();
     }
 }
 
