@@ -26,9 +26,9 @@ fn main() {
 
     let views = qdom.render(my_widget, "Reverser");
 
-    views.on(EventType::Click, |ref mut data| {
+    views.on(EventType::Click, |evt| {
         println!("on click called");
-        data.message = data.message.chars().rev().collect::<String>();
+        evt.data.message = evt.data.message.chars().rev().collect::<String>();
     });
 
     println!("End of main");

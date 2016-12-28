@@ -3,7 +3,10 @@ extern crate mustache;
 extern crate rustc_serialize;
 
 mod events;
-pub use events::*;
+mod component;
+
+pub use events::{EventType, Event};
+pub use component::Component;
 
 use std::collections::HashMap;
 use std::any::{Any, TypeId};
@@ -13,122 +16,8 @@ use rustc_serialize::Encodable;
 use webplatform::{Document, HtmlNode};
 
 pub use mustache::{compile_str, Template};
-use mustache::encoder;
-
-pub struct Component<Data> {
-    pub template: Template,
-    pub data: Data,
-    pub props: Vec<&'static str>,
-}
-
-impl <Data: Encodable> Component<Data> {
-    fn render<'doc>(&self, node: &HtmlNode<'doc>) -> String {
-        let mut data = encoder::encode(&self.data).expect("Failed to encode component data");
-        let mut output = Vec::new();
-
-        // Augment the scope data with 'props'
-        let mut props = HashMap::new();
-        for prop in &self.props {
-            let val = node.prop_get_str(prop);
-            props.insert(prop.to_string(), mustache::Data::StrVal(val));
-        }
-
-        match data {
-            mustache::Data::Map(ref mut map) => {
-                map.insert("props".to_string(), mustache::Data::Map(props));
-            }
-            _ => panic!("Unexpected data encoding")
-        }
-
-        self.template.render_data(&mut output, &data).expect("failed to render component");
-        String::from_utf8_lossy(&output).into_owned()
-    }
-}
 
 
-/// A collection of `View`s returned from a query selector
-pub struct Views<'a, 'doc: 'a, Data: 'a> {
-    views: Vec<View<'a, 'doc, Data>>,
-    // Views may have multiple handlers, hence Vec
-    // We want interior mutability, hence RefCell
-    // A handler may map to multiple views
-    handlers: Rc<RefCell<Vec<Box<Fn(&mut Data) + 'doc>>>>,
-}
-
-impl <'a, 'doc: 'a, Data: 'doc + Encodable> Views<'a, 'doc, Data> {
-    pub fn on<F: 'doc>(&self, event: EventType, f: F) where F: Fn(&mut Data) {
-        // Insert the handler into self and return it's index
-        let offset = {
-            let mut handlers = self.handlers.borrow_mut();
-            handlers.push(Box::new(f));
-            handlers.len() - 1
-        };
-
-        // For each view, setup a unique 'on' handler
-        for view in &self.views {
-            println!("attaching handler to view: {:?}", &view.node);
-            let handlers = self.handlers.clone();
-            let rc_component = view.component.clone();
-            let node = view.node.clone();
-            view.node.on(event.name(), move |evt| {
-                let handlers = handlers.clone();
-                println!("Event fired on {:?} for target {:?}", &node, evt.target);
-                let rendered = {
-                    let mut component = rc_component.borrow_mut();
-                    let inner_handlers = handlers.borrow();
-                    inner_handlers[offset](&mut component.data);
-                    component.render(&node)
-                };
-                node.html_set(&rendered);
-            });
-        }
-        println!("{} On handlers registered", self.views.len());
-    }
-}
-
-pub struct View<'a, 'doc: 'a, Data: 'a> {
-    // document and el are redundant of node,
-    // but needed for nested queries
-    document: &'a Document<'doc>,
-    el: String,
-
-    node: Rc<HtmlNode<'doc>>,
-    component: Rc<RefCell<Component<Data>>>,
-}
-
-impl <'a, 'doc: 'a, Data: 'doc + Encodable> View<'a, 'doc, Data> {
-    pub fn on<F: 'doc>(&self, event: EventType, f: F) where F: Fn(&mut Data) {
-        {
-            let rc_component = self.component.clone();
-            let node = self.node.clone();
-            self.node.on(event.name(), move |evt| {
-                println!("Event fired on {:?} for target {:?}", &node, evt.target);
-                let rendered = {
-                    let mut component = rc_component.borrow_mut();
-                    f(&mut component.data);
-                    component.render(&node)
-                };
-                node.html_set(&rendered);
-            });
-            println!("On handler registered");
-        }
-    }
-}
-
-#[derive(Hash, Eq, PartialEq)]
-pub struct ViewId {
-    tid: TypeId,
-    selector: String,
-}
-
-impl ViewId {
-    fn new<Data: 'static + Encodable>(el: &str) -> ViewId {
-        ViewId {
-            tid: TypeId::of::<Data>(),
-            selector: el.to_owned(),
-        }
-    }
-}
 
 pub fn init<'a>() -> QuasarDom<'a> {
     QuasarDom {
@@ -194,18 +83,118 @@ impl <'a, 'doc: 'a> QuasarDom<'doc> {
         let component: &Rc<RefCell<Component<Data>>> = entry.downcast_ref().unwrap();
         component.clone()
     }
-
-    // pub fn query(&'a self, el: &str) -> Node<'doc>  {
-    //     let node = self.document.element_query(el).unwrap();
-    //     Node {
-    //         node: node,
-    //         el: el.to_owned(),
-    //     }
-    // }
-
-    // pub fn on
 }
 
+/// A collection of `View`s returned from a query selector
+pub struct Views<'a, 'doc: 'a, Data: 'a> {
+    views: Vec<View<'a, 'doc, Data>>,
+    // Views may have multiple handlers, hence Vec
+    // We want interior mutability, hence RefCell
+    // A handler may map to multiple views
+    handlers: Rc<RefCell<Vec<Box<Fn(Event<Data>) + 'doc>>>>,
+}
+
+impl <'a, 'doc: 'a, Data: 'doc + Encodable> Views<'a, 'doc, Data> {
+    pub fn on<F>(&self, event: EventType, f: F) where for<'r, 's: 'doc> F: Fn(Event<'r, 's, Data>) + 'doc {
+        // Insert the handler into self and return it's index
+        let offset = {
+            let mut handlers = self.handlers.borrow_mut();
+            handlers.push(Box::new(f));
+            handlers.len() - 1
+        };
+
+        // For each view, setup a unique 'on' handler
+        for view in &self.views {
+            println!("attaching handler to view: {:?}", &view.node);
+            let handlers = self.handlers.clone();
+            let rc_component = view.component.clone();
+            let node = view.node.clone();
+            view.node.on(event.name(), move |evt| {
+                let handlers = handlers.clone();
+                println!("Event fired on {:?} for target {:?}", &node, evt.target);
+                let rendered = {
+                    let mut component = rc_component.borrow_mut();
+                    let inner_handlers = handlers.borrow();
+                    {
+                        let event = Event {
+                            target: Element { node: &evt.target.expect("Event did not have a target") },
+                            data: &mut component.data,
+                        };
+                        inner_handlers[offset](event);
+                    }
+                    component.render(&node)
+                };
+                node.html_set(&rendered);
+            });
+        }
+        println!("{} On handlers registered", self.views.len());
+    }
+}
+
+pub struct View<'a, 'doc: 'a, Data: 'a> {
+    // document and el are redundant of node,
+    // but needed for nested queries
+    document: &'a Document<'doc>,
+    el: String,
+
+    node: Rc<HtmlNode<'doc>>,
+    component: Rc<RefCell<Component<Data>>>,
+}
+
+impl <'a, 'doc: 'a, Data: 'doc + Encodable> View<'a, 'doc, Data> {
+    pub fn on<F>(&self, event: EventType, f: F) where for<'r, 's: 'doc> F: Fn(Event<'r, 's, Data>) + 'doc {
+        {
+            let rc_component = self.component.clone();
+            let node = self.node.clone();
+            self.node.on(event.name(), move |evt| {
+                println!("Event fired on {:?} for target {:?}", &node, evt.target);
+                let rendered = {
+                    let mut component = rc_component.borrow_mut();
+                    {
+                        let event = Event {
+                            target: Element { node: &evt.target.expect("Event did not have a target") },
+                            data: &mut component.data,
+                        };
+                        f(event);
+                    }
+                    component.render(&node)
+                };
+                node.html_set(&rendered);
+            });
+            println!("On handler registered");
+        }
+    }
+}
+
+#[derive(Hash, Eq, PartialEq)]
+pub struct ViewId {
+    tid: TypeId,
+    selector: String,
+}
+
+impl ViewId {
+    fn new<Data: 'static + Encodable>(el: &str) -> ViewId {
+        ViewId {
+            tid: TypeId::of::<Data>(),
+            selector: el.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Element<'a, 'doc: 'a> {
+    node: &'a HtmlNode<'doc>
+}
+
+impl <'a, 'doc: 'a> Element<'a, 'doc>{
+    pub fn set(&self, prop: &str, value: &str) {
+        self.node.prop_set_str(prop, value);
+    }
+
+    pub fn get(&self, prop: &str) -> String {
+        self.node.prop_get_str(prop)
+    }
+}
 
 impl <'doc> Drop for QuasarDom<'doc> {
     fn drop(&mut self) {

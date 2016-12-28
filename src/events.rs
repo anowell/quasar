@@ -1,3 +1,5 @@
+use ::Element;
+
 #[derive(Clone)]
 pub enum EventType {
     Click,
@@ -31,4 +33,9 @@ impl EventType {
             EventType::Focus => "focus",
         }
     }
+}
+
+pub struct Event<'a, 'doc: 'a, Data: 'a> {
+    pub target: Element<'a, 'doc>,
+    pub data: &'a mut Data,
 }

@@ -16,7 +16,12 @@ if [[ "$item" = "test" ]]; then
 elif [[ "$item" = "examples" ]]; then
   cargo test --target=asmjs-unknown-emscripten --no-run
   cp $ROOT/target/asmjs-unknown-emscripten/debug/examples/*.js $ROOT/static/
+elif [[ -d "$ROOT/examples/$item" ]]; then
+  ROOT=$ROOT/examples/$item
+  cd $ROOT
+  cargo build --target=asmjs-unknown-emscripten
+  cp $ROOT/target/asmjs-unknown-emscripten/debug/${item}.js $ROOT/static/
 elif [[ -n "$item" ]]; then
-  cargo test --example $item  --target=asmjs-unknown-emscripten
+  cargo test --example $item --target=asmjs-unknown-emscripten
   cp $ROOT/target/asmjs-unknown-emscripten/debug/examples/${item}.js $ROOT/static/
 fi

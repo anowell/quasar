@@ -1,0 +1,8 @@
+[package]
+name = "app"
+version = "0.1.0"
+authors = ["Anthony Nowell <anthony@algorithmia.com>"]
+
+[dependencies]
+rustc-serialize = "0.3.18"
+quasar = { path = "/home/anowell/proj/quasar" }
