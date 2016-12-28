@@ -2,6 +2,9 @@ extern crate webplatform;
 extern crate mustache;
 extern crate rustc_serialize;
 
+mod events;
+pub use events::*;
+
 use std::collections::HashMap;
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
@@ -42,18 +45,6 @@ impl <Data: Encodable> Component<Data> {
     }
 }
 
-#[derive(Clone)]
-pub enum EventType {
-    Click,
-}
-
-impl EventType {
-    fn name(&self) -> &'static str {
-        match *self {
-            EventType::Click => "click",
-        }
-    }
-}
 
 /// A collection of `View`s returned from a query selector
 pub struct Views<'a, 'doc: 'a, Data: 'a> {
