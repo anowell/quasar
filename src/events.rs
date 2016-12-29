@@ -35,7 +35,7 @@ impl EventType {
     }
 }
 
-pub struct Event<'a, 'doc: 'a, Data: 'a> {
+pub struct Event<'a, 'doc: 'a, R: 'a> {
     pub target: Element<'a, 'doc>,
-    pub data: &'a mut Data,
+    pub component: &'a mut R,
 }

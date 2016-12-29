@@ -22,6 +22,6 @@ pub fn init(qdom: &mut QuasarDom) {
     qdom.render(component, "#hello")
         // .query("#name-field")
         .on(EventType::Input, |evt| {
-            evt.data.name = evt.target.get("value");
+            evt.component.data.name = evt.target.get("value");
         });
 }

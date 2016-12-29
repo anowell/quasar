@@ -22,6 +22,6 @@ pub fn init(qdom: &mut QuasarDom) {
     qdom.render(component, "#counter")
         // .query("button")
         .on(EventType::Click, |evt| {
-            evt.data.count += 1;
+            evt.component.data.count += 1;
         });
 }

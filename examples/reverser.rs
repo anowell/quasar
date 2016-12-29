@@ -28,7 +28,7 @@ fn main() {
 
     views.on(EventType::Click, |evt| {
         println!("on click called");
-        evt.data.message = evt.data.message.chars().rev().collect::<String>();
+        evt.component.data.message = evt.data.message.chars().rev().collect::<String>();
     });
 
     println!("End of main");
