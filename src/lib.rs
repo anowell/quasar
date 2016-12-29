@@ -221,8 +221,8 @@ impl <'doc> Drop for QuasarDom<'doc> {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn it_works() {
-        unimplemented!()
-    }
+    // #[test]
+    // fn it_works() {
+    //     unimplemented!()
+    // }
 }
