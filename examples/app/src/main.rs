@@ -7,4 +7,6 @@ fn main() {
     println!("Starting...");
 
     components::hello::init(&mut qdom);
+    components::counter::init(&mut qdom);
+    components::cat_list::init(&mut qdom);
 }
