@@ -7,15 +7,16 @@ struct CatData { cats: Vec<Cat> }
 struct Cat { name: String }
 
 pub fn init(qdom: &mut QuasarDom) {
-    let cats = vec!["Bella", "Tiger", "Chloe", "Shadow", "Luna", "Oreo"];
+    let cat_names = vec!["Bella", "Tiger", "Chloe", "Shadow", "Luna", "Oreo"];
+    let cats = cat_names.iter()
+        .map(|c| Cat{ name: c.to_string() })
+        .collect();
 
     let cat_list = Component {
-        data: CatData {
-            cats: cats.iter().map(|c| Cat{ name: c.to_string() }).collect()
-        },
-
         props: vec![],
-
+        data: CatData {
+            cats: cats
+        },
         template: compile_str(r##"
             <ul>
             {{#cats}}

@@ -1,13 +1,14 @@
 extern crate webplatform;
-extern crate mustache;
 extern crate rustc_serialize;
 
+#[cfg(feature = "mustache")]
+extern crate mustache;
+
 mod events;
-mod component;
+mod components;
 
 pub use events::{EventType, Event};
-pub use component::{Properties, Renderable};
-pub use component::Component; // Mustache-specific
+pub use components::{Component, Properties, Renderable};
 
 use std::collections::HashMap;
 use std::any::{Any, TypeId};
@@ -15,9 +16,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use webplatform::{Document, HtmlNode};
 
-pub use mustache::{compile_str, Template};
-
-
+#[cfg(feature = "mustache")]
+pub use mustache::compile_str;
 
 pub fn init<'a>() -> QuasarDom<'a> {
     QuasarDom {

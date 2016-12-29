@@ -1,4 +1,5 @@
 extern crate quasar;
+extern crate mustache;
 extern crate rustc_serialize;
 
 use quasar::{compile_str, Component, EventType};
