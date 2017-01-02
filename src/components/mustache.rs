@@ -1,5 +1,6 @@
 use mustache::{encoder, Data, Template};
 use rustc_serialize::Encodable;
+use ::std::collections::HashMap;
 use super::{Component, Renderable, Properties};
 
 impl <D: Encodable> Renderable for Component<D, Template> {
@@ -8,7 +9,11 @@ impl <D: Encodable> Renderable for Component<D, Template> {
     }
 
     fn render<'doc>(&self, props: Properties) -> String {
-        let mut data = encoder::encode(&self.data).expect("Failed to encode component data");
+        let mut data = encoder::encode(&self.data).unwrap_or_else(|err| {
+            println!("Failed to encode component data. {}. Using empty hash", err);
+            Data::Map(HashMap::new())
+        });
+
         match data {
             Data::Map(ref mut map) => {
                 let mustache_props = props.into_iter().map(|(k,v)| {

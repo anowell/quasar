@@ -1,11 +1,11 @@
 use quasar::*;
 
-#[derive(RustcEncodable)]
+#[derive(Debug, RustcEncodable)]
 struct CounterData {
     count: u32,
 }
 
-pub fn init(qdom: &mut QuasarDom) {
+pub fn init(app: &QuasarApp) {
     let component = Component {
         data: CounterData {
             count: 0
@@ -19,9 +19,9 @@ pub fn init(qdom: &mut QuasarDom) {
         "##).expect("failed to compile counter template")
     };
 
-    qdom.render(component, "#counter")
+    app.bind(component, "#counter")
         // .query("button")
-        .on(EventType::Click, |evt| {
-            evt.component.data.count += 1;
+        .on(EventType::Click, |mut evt| {
+            evt.view.data_mut().count += 1;
         });
 }

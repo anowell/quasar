@@ -11,7 +11,7 @@ struct ReverseData {
 
 
 fn main() {
-    let mut qdom = quasar::init();
+    let app = quasar::init();
 
     let my_widget = Component {
         data: ReverseData {
@@ -25,12 +25,13 @@ fn main() {
         "##).expect("failed to compile my_widget template")
     };
 
-    let views = qdom.render(my_widget, "Reverser");
-
-    views.on(EventType::Click, |evt| {
+    let views = app.bind(my_widget, "Reverser");
+    views.on(EventType::Click, |mut evt| {
         println!("on click called");
-        evt.component.data.message = evt.component.data.message.chars().rev().collect::<String>();
+        let mut data = evt.view.data_mut();
+        data.message = data.message.chars().rev().collect::<String>();
     });
 
     println!("End of main");
+    app.spin();
 }

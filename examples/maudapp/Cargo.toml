@@ -8,5 +8,5 @@ maud = "0.14.0"
 maud_macros = "0.14.0"
 
 [dependencies.quasar]
-path = "/home/anowell/proj/quasar"
+path = "../.."
 default-features = false

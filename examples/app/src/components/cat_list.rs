@@ -1,12 +1,12 @@
 use quasar::*;
 
-#[derive(RustcEncodable)]
+#[derive(Debug, RustcEncodable)]
 struct CatData { cats: Vec<Cat> }
 
-#[derive(RustcEncodable)]
+#[derive(Debug, RustcEncodable)]
 struct Cat { name: String }
 
-pub fn init(qdom: &mut QuasarDom) {
+pub fn init(app: &QuasarApp) {
     let cat_names = vec!["Bella", "Tiger", "Chloe", "Shadow", "Luna", "Oreo"];
     let cats = cat_names.iter()
         .map(|c| Cat{ name: c.to_string() })
@@ -27,14 +27,18 @@ pub fn init(qdom: &mut QuasarDom) {
     };
 
     let cat_item = Component {
-        data: Cat { name: "what?".to_string() },
+        data: (),
         props: vec!["catname"],
         template: compile_str(r##"
             <li>{{ props.catname }}</li>
         "##).expect("failed to compile cat_item template")
     };
 
-    qdom.render(cat_list, ".cat-list");
-    // TODO: allow chaining renders for nested
-    qdom.render(cat_item, "Cat");
+    app.bind(cat_list, ".cat-list");
+    // TODO: allow chaining binds for nested
+    app.bind(cat_item, "Cat")
+        .on(EventType::Click, |evt| {
+            let catname = evt.target.get("catname");
+            println!("cat {} is in {:?}", &catname, &evt.target);
+        });
 }

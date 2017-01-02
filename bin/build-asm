@@ -9,7 +9,7 @@ set -e
 
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 item=$1
-shift
+shift || true
 
 echo "Building Quasar"
 cargo build --target=asmjs-unknown-emscripten $@

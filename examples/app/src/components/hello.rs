@@ -1,11 +1,11 @@
 use quasar::*;
 
-#[derive(RustcEncodable)]
+#[derive(Debug, RustcEncodable)]
 struct HelloData {
     name: String,
 }
 
-pub fn init(qdom: &mut QuasarDom) {
+pub fn init(app: &QuasarApp) {
     let component = Component {
         data: HelloData {
             name: "world".to_owned()
@@ -19,9 +19,9 @@ pub fn init(qdom: &mut QuasarDom) {
         "##).expect("failed to compile hello template")
     };
 
-    qdom.render(component, "#hello")
+    app.bind(component, "#hello")
         // .query("#name-field")
-        .on(EventType::Input, |evt| {
-            evt.component.data.name = evt.target.get("value");
+        .on(EventType::Input, |mut evt| {
+            evt.view.data_mut().name = evt.target.get("value");
         });
 }

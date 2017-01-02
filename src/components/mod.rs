@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::{Deref, DerefMut};
 
 #[cfg(feature = "mustache")]
 mod mustache;
@@ -20,9 +21,22 @@ pub trait Renderable {
 }
 
 /// Component for templating
+#[derive(Debug)]
 pub struct Component<D, T> {
     pub data: D,
     pub template: T,
     pub props: Vec<&'static str>,
 }
 
+impl <D, T> Deref for Component<D, T> {
+    type Target = D;
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl <D, T> DerefMut for Component<D, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
+}

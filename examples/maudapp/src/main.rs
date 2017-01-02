@@ -7,10 +7,11 @@ extern crate maud;
 mod components;
 
 fn main() {
-    let mut qdom = quasar::init();
+    let app = quasar::init();
     println!("Starting...");
 
-    //components::hello::init(&mut qdom);
-    components::counter::init(&mut qdom);
-    //components::cat_list::init(&mut qdom);
+    //components::hello::init(&app);
+    components::counter::init(&app);
+    //components::cat_list::init(&app);
+    app.spin();
 }

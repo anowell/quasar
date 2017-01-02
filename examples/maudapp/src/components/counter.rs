@@ -13,14 +13,14 @@ impl Renderable for CounterData {
     }
 }
 
-pub fn init(qdom: &mut QuasarDom) {
+pub fn init(app: &QuasarApp) {
     let component = CounterData {
         count: 0
     };
 
-    qdom.render(component, "#counter")
+    app.bind(component, "#counter")
         // .query("button")
-        .on(EventType::Click, |evt| {
-            evt.component.count += 1;
+        .on(EventType::Click, |mut evt| {
+            evt.view.data_mut().count += 1;
         });
 }
