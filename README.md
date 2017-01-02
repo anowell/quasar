@@ -18,12 +18,14 @@ Oh, and black hole's form from the collapse of a core of iron.. you know, the on
 
 Everything is experimental, half-baked, full of caveats, and subject to change. But currently:
 
-- **Template engines** are swappable. There are ([`examples`](https://github.com/anowell/quasar/tree/master/examples) using [mustache](https://crates.io/crates/mustache)(default) and [maud](https://crates.io/crates/maud). But replacing the template engine is just a matter of implementing the `Renderable` trait.
-- **Components** are the combination of data with a template or other rendering process - really anything that implements `Renderable`. Quasar takes ownership of your components during the binding process, and makes the data available to your event handlers via `data()` and `data_mut()` methods. In general, methods that mutate the component will result in re-rendering it (TBD: at the end of the event handler or at next tick). Note, component data is local to the component and not shareable outside your component.
+- **Template engines** are swappable. There are [`examples`](https://github.com/anowell/quasar/tree/master/examples) using [mustache](https://crates.io/crates/mustache)(default) and [maud](https://crates.io/crates/maud). But replacing the template engine is just a matter of implementing the `Renderable` trait.
+- **Components** are the combination of data with a template or other rendering process - really anything that implements `Renderable`. Quasar takes ownership of your components when binding them to the DOM and makes the data available to your event handlers via `data()` and `data_mut()` methods. In general, methods that mutate the component will result in re-rendering it (TBD: at the end of the event handler or at next tick). Note, component data is local to the component and not shareable outside your component.
 - **Views** are the result of one-way binding of a component to the DOM. You can also attach event listeners to views. Note, that currently rendering a view uses the destructive `innerHtml = ...` approach, which kills DOM state like input focus, so eventually some sort of DOM diffing/patching or virtual DOM solution will become pretty important.
-- **State** or the shared app data is also available to event handlers. It is partitioned by a key (a type and name), and any attempt to read a shared data partition (calling `data()`) automatically registeres your view as an observer of that data partion (to-be implemented). Any attempt to write to an app data partition (calling `data_mut()`) will automatically add all observer views for that data partition to the re-render queue (TBD: processed at the end of the event handler or at the next tick).
+- **State** or the shared app data is also available to event handlers. It is partitioned by a key (and by `TypeId`), and any attempt to read a shared data partition (calling `data(key)`) automatically registeres your view as an observer of that data partion (to-be implemented). Any attempt to write to an app data partition (calling `data_mut(key)`) will automatically add all observer views for that data partition to the re-render queue (TBD: processed at the end of the event handler or at the next tick).
 
-**With Quasar, it should be impossible in safe Rust to update state in your application without also updating views.**
+A couple basic principles are beginning to emerge. With Quasar...
+- **it should be impossible in safe Rust to update state in your application without also updating views.**
+- **all your app and component state are statically typed in data structures of your choosing**
 
 A basic example might include an HTML file like this:
 
@@ -42,24 +44,22 @@ You can bind and update data with a snippet like this:
 fn main() {
     let mut app = quasar::init();
 
-    let my_widget = Component {
-        data: ReverseData{
-            message: "Hello World".to_owned()
+    let component = Component {
+        props: vec![],
+        data: CounterData {
+            count: 0
         },
-        props: vec!["name"],
         template: compile_str(r##"
-            <p>{{ props.name }}, {{ message }}</p>
-            <button>Reverse Message</button>
-        "##).expect("failed to compile my_widget template")
+            <p>Count: {{count}}</p>
+            <button>+1</button>
+        "##).expect("failed to compile counter template")
     };
 
-    let views = app.render(my_widget, "Reverser");
-    views.on(EventType::Click, |mut evt| {
-        println!("Reverser clicked!!!");
-        let mut data = evt.view.data();
-        data.message = data.message.chars().rev().collect();
-    });
-    
+    app.bind(component, "#counter")
+        .on(EventType::Click, |mut evt| {
+            evt.view.data_mut().count += 1;
+        });
+
     app.spin();
 }
 ```
@@ -71,7 +71,7 @@ See the [`examples`](https://github.com/anowell/quasar/tree/master/examples) dir
 I'm still working to better understand what works and what's missing in [webplatform](https://github.com/tcr/rust-webplatform).
 Here are some overarching questions that are guiding this experimentation right now:
 
-- Can Quasar achieve a level of abstractions that feel comparable to modern Javascript frameworks? (May add some macros to rival the declarative syntax of some other frameworks.)
+- Can Quasar achieve a level of abstractions that feel comparable to modern Javascript frameworks? (I believe some macros could allow it to rival the declarative syntax of some other frameworks.)
 - What might it look like to have "isomorphic" rust, where the same rendering code can run both client and server side?
 - How can I leverage the type system to achieve more flexible and/or more robust frontend development? (e.g. trait-based templating, leveraging immutable vs mutable access as a gate for identifying views that observer or mutate specific data.)
 
