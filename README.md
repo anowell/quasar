@@ -70,6 +70,6 @@ Here are some overarching questions that are guiding this experimentation right 
 
 - Can Quasar achieve a level of abstractions that feel comparable to modern Javascript frameworks? (May add some macros to rival the declarative syntax of some other frameworks.)
 - What might it look like to have "isomorphic" rust, where the same rendering code can run both client and server side?
-- How can I leverage the type system to achieve ? (e.g. trait-based templating, leveraging immutable vs mutable access as a gate for identifying views that observer or mutate specific data.)
+- How can I leverage the type system to achieve more flexible and/or more robust frontend development? (e.g. trait-based templating, leveraging immutable vs mutable access as a gate for identifying views that observer or mutate specific data.)
 
 Admittedly Quasar is absent any perf goals at this time. Quasar also lacks a clear vision for why Quasar would be "better than X", so I'll probably ask myself "what problem is Quasar really solving?" multiple times throughout this experimentation.
