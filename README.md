@@ -14,14 +14,16 @@ Oh, and black hole's form from the collapse of a core of iron.. you know, the on
 
 ---
 
-## Current Status
+## How it works
 
-Everything is experimental, half-baked, full of caveats, and subject to change.
+Everything is experimental, half-baked, full of caveats, and subject to change. But currently:
 
-That said:
-- templating engines are swappable with examples using [mustache](https://crates.io/crates/mustache)(default) and [maud](https://crates.io/crates/maud).
-- templates can one-way bind to both data and properties of the node they are rendered into
-- event handlers can be assigned to views and used to update bound data or more directly the view itself
+- **Template engines** are swappable. There are ([`examples`](https://github.com/anowell/quasar/tree/master/examples) using [mustache](https://crates.io/crates/mustache)(default) and [maud](https://crates.io/crates/maud). But replacing the template engine is just a matter of implementing the `Renderable` trait.
+- **Components** are the combination of data with a template or other rendering process - really anything that implements `Renderable`. Quasar takes ownership of your components during the binding process, and makes the data available to your event handlers via `data()` and `data_mut()` methods. In general, methods that mutate the component will result in re-rendering it (TBD: at the end of the event handler or at next tick). Note, component data is local to the component and not shareable outside your component.
+- **Views** are the result of one-way binding of a component to the DOM. You can also attach event listeners to views. Note, that currently rendering a view uses the destructive `innerHtml = ...` approach, which kills DOM state like input focus, so eventually some sort of DOM diffing/patching or virtual DOM solution will become pretty important.
+- **State** or the shared app data is also available to event handlers. It is partitioned by a key (a type and name), and any attempt to read a shared data partition (calling `data()`) automatically registeres your view as an observer of that data partion (to-be implemented). Any attempt to write to an app data partition (calling `data_mut()`) will automatically add all observer views for that data partition to the re-render queue (TBD: processed at the end of the event handler or at the next tick).
+
+**With Quasar, it should be impossible in safe Rust to update state in your application without also updating views.**
 
 A basic example might include an HTML file like this:
 
@@ -59,15 +61,15 @@ fn main() {
 }
 ```
 
-Skim through the [`examples`](https://github.com/anowell/quasar/tree/master/examples) directory to get a sense of how to use it today.
+See the [`examples`](https://github.com/anowell/quasar/tree/master/examples) directory to get a sense of how it works today.
 
 ## What's next?
 
 I'm still working to better understand what works and what's missing in [webplatform](https://github.com/tcr/rust-webplatform).
 Here are some overarching questions that are guiding this experimentation right now:
 
-- Can Quasar achieve a level of abstractions that feel comparable to modern Javascript frameworks?
+- Can Quasar achieve a level of abstractions that feel comparable to modern Javascript frameworks? (May add some macros to rival the declarative syntax of some other frameworks.)
 - What might it look like to have "isomorphic" rust, where the same rendering code can run both client and server side?
-- What might a modular, trait-based templating engine look like?
+- How can I leverage the type system to achieve ? (e.g. trait-based templating, leveraging immutable vs mutable access as a gate for identifying views that observer or mutate specific data.)
 
-Admittedly Quasar is absent any perf goals, but more importantly, Quasar lacks a compelling vision for why Quasar would be better than X, so I'll probably ask myself "what problem is Quasar really solving?" multiple times throughout this experimentation.
+Admittedly Quasar is absent any perf goals at this time. Quasar also lacks a clear vision for why Quasar would be "better than X", so I'll probably ask myself "what problem is Quasar really solving?" multiple times throughout this experimentation.
