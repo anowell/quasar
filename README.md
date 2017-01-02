@@ -40,7 +40,7 @@ You can bind and update data with a snippet like this:
 
 ```rust
 fn main() {
-    let mut qdom = quasar::init();
+    let mut app = quasar::init();
 
     let my_widget = Component {
         data: ReverseData{
@@ -53,11 +53,14 @@ fn main() {
         "##).expect("failed to compile my_widget template")
     };
 
-    let views = qdom.render(my_widget, "Reverser");
-    views.on(EventType::Click, |evt| {
+    let views = app.render(my_widget, "Reverser");
+    views.on(EventType::Click, |mut evt| {
         println!("Reverser clicked!!!");
-        evt.component.data.message = evt.component.data.message.chars().rev().collect();
+        let mut data = evt.view.data();
+        data.message = data.message.chars().rev().collect();
     });
+    
+    app.spin();
 }
 ```
 
