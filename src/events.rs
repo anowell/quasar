@@ -1,6 +1,4 @@
-use ::{Element, View, QuasarApp, Renderable};
-use std::cell::RefCell;
-use std::rc::Rc;
+use ::{Element, View, AppContext};
 
 #[derive(Clone)]
 pub enum EventType {
@@ -38,8 +36,7 @@ impl EventType {
 }
 
 pub struct Event<'a, 'b, 'c, R> {
-    pub app: QuasarApp<'a>,
+    pub app: AppContext<'a>,
     pub target: Element<'b>,
     pub view: View<'c, R>,
 }
-

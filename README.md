@@ -14,26 +14,23 @@ Oh, and black hole's form from the collapse of a core of iron.. you know, the on
 
 ---
 
+Everything is experimental, half-baked, full of caveats, and subject to change. But some basic principles are beginning to emerge. With Quasar...
+- **all your app and component state are statically typed in data structures of your choosing**
+- **updating state in your application automatically updates views** (unless you update your state via interior mutability)
+
 ## How it works
 
-Everything is experimental, half-baked, full of caveats, and subject to change. But currently:
-
 - **Template engines** are swappable. There are [`examples`](https://github.com/anowell/quasar/tree/master/examples) using [mustache](https://crates.io/crates/mustache)(default) and [maud](https://crates.io/crates/maud). But replacing the template engine is just a matter of implementing the `Renderable` trait.
-- **Components** are the combination of data with a template or other rendering process - really anything that implements `Renderable`. Quasar takes ownership of your components when binding them to the DOM and makes the data available to your event handlers via `data()` and `data_mut()` methods. In general, methods that mutate the component will result in re-rendering it (TBD: at the end of the event handler or at next tick). Note, component data is local to the component and not shareable outside your component.
+- **Components** are the combination of data with a template or other rendering process - really anything that implements `Renderable`. Quasar takes ownership of your components when binding them to the DOM and makes the data available to your event handlers via `data()` and `data_mut()` methods. In general, methods that mutate the component will result in re-rendering it at the end of the event handler. Note, component data is local to the component and not shareable outside your component.
 - **Views** are the result of one-way binding of a component to the DOM. You can also attach event listeners to views. Note, that currently rendering a view uses the destructive `innerHtml = ...` approach, which kills DOM state like input focus, so eventually some sort of DOM diffing/patching or virtual DOM solution will become pretty important.
-- **State** or the shared app data is also available to event handlers. It is partitioned by a key (and by `TypeId`), and any attempt to read a shared data partition (calling `data(key)`) automatically registeres your view as an observer of that data partion (to-be implemented). Any attempt to write to an app data partition (calling `data_mut(key)`) will automatically add all observer views for that data partition to the re-render queue (TBD: processed at the end of the event handler or at the next tick).
-
-A couple basic principles are beginning to emerge. With Quasar...
-- **it should be impossible in safe Rust to update state in your application without also updating views.**
-- **all your app and component state are statically typed in data structures of your choosing**
+- **App Data** is shared state that is also available to event handlers. It is partitioned by a key (and by `TypeId`), and any attempt to read a shared data partition (calling `data(key)`) automatically registers your view as an observer of that data partion. Any attempt to write to an app data partition (calling `data_mut(key)`) will automatically add all observer views for that data partition to the re-render queue process at the end of the event handler.
 
 A basic example might include an HTML file like this:
 
 ```html
 <html>
   <body>
-    <Reverser name="Malcom Reynolds"></Reverser>
-    <Reverser name="Shepherd Book"></Reverser>
+    <div id="counter"></div>
   </body>
 </html>
 ```
@@ -66,13 +63,36 @@ fn main() {
 
 See the [`examples`](https://github.com/anowell/quasar/tree/master/examples) directory to get a sense of how it works today.
 
-## What's next?
+## Goals
 
-I'm still working to better understand what works and what's missing in [webplatform](https://github.com/tcr/rust-webplatform).
-Here are some overarching questions that are guiding this experimentation right now:
+Quasar is still exploring some ideas and working to better understand what works and what's missing in [webplatform](https://github.com/tcr/rust-webplatform). Here are some overarching questions that are guiding this experimentation right now:
 
 - Can Quasar achieve a level of abstractions that feel comparable to modern Javascript frameworks? (I believe some macros could allow it to rival the declarative syntax of some other frameworks.)
 - What might it look like to have "isomorphic" rust, where the same rendering code can run both client and server side?
 - How can I leverage the type system to achieve more flexible and/or more robust frontend development? (e.g. trait-based templating, leveraging immutable vs mutable access as a gate for identifying views that observer or mutate specific data.)
 
 Admittedly Quasar is absent any perf goals at this time. Quasar also lacks a clear vision for why Quasar would be "better than X", so I'll probably ask myself "what problem is Quasar really solving?" multiple times throughout this experimentation.
+
+## Building
+
+You'll need emscripten setup and activated (see [brson's post](https://users.rust-lang.org/t/compiling-to-the-web-with-rust-and-emscripten/7627)), and then to add a couple compilation targets:
+
+```bash
+rustup target add asmjs-unknown-emscripten
+rustup target add wasm32-unknown-emscripten
+```
+
+Then `bin/build-asm` wraps cargo to simplify much of the build process
+
+```bash
+bin/build-asm # build quasar
+bin/build-asm reverser # build quasar and the reverser example (output copied to `static/`)
+bin/build-asm app # build quasar and examples/app (output copied to `exaples/app/static/`)
+bin/build all # build everyting
+```
+
+For any of the built examples, you can serve the result with any simple server, e.g. with the official nginx docker image:
+
+```bash
+docker run --rm -it -v `pwd`/static:/usr/share/nginx/html -p 8081:80 nginx
+```

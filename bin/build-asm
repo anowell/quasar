@@ -13,6 +13,7 @@ shift || true
 
 echo "Building Quasar"
 cargo build --target=asmjs-unknown-emscripten $@
+test -n "$item" || exit 0
 
 if [[ "$item" = "all" ]]; then
   echo "Building examples"
