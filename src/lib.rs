@@ -1,6 +1,5 @@
 extern crate webplatform;
 extern crate rustc_serialize;
-extern crate owning_ref;
 
 #[macro_use]
 extern crate downcast_rs;
@@ -15,11 +14,11 @@ pub use events::{EventType, Event};
 pub use components::{Component, Properties, Renderable};
 pub use rustc_serialize::json::Json;
 
-use owning_ref::{RefRef, RefMutRef};
 use std::collections::HashMap;
 use std::any::{Any, TypeId};
 use std::cell::{RefCell, Ref, RefMut};
 use std::rc::Rc;
+use std::ops::{Deref, DerefMut};
 use std::marker::PhantomData;
 use webplatform::{Document, HtmlNode};
 
@@ -48,6 +47,7 @@ type RenderQueue<'doc> = Vec<(TypedKey, Rc<HtmlNode<'doc>>)>;
 // it feels very strange that QuasarApp is basically an `Rc` type
 // but it's non-trivial to pass around &QuasarApp since events need access
 // and almost certainly outlive the app instance if not for all the Rc members
+/// The main app object instantiated by calling `quasar::init()`
 #[derive(Clone)]
 pub struct QuasarApp<'doc> {
     document: Rc<Document<'doc>>,
@@ -57,6 +57,7 @@ pub struct QuasarApp<'doc> {
     render_queue: Rc<RefCell<RenderQueue<'doc>>>,
 }
 
+/// Provides select access to the global `QuasarApp` object in the context of a specific `View`
 pub struct AppContext<'doc> {
     app: QuasarApp<'doc>,
     view_id: TypedKey,
@@ -64,19 +65,58 @@ pub struct AppContext<'doc> {
 }
 
 impl <'doc> AppContext<'doc> {
+    /// Get app data for a specific key
+    ///
+    /// This will flag the view in scope as an observer of this data bucket,
+    ///   and any modifications to data at this key will cause this view to be re-rendered.
     pub fn data<T: 'static>(&self, key: &str) -> DataRef<T> {
         self.app.add_observer(self.view_id.clone(), self.node.clone());
         self.app.data(key)
     }
 
+    /// Get app data for a specific key
+    ///
+    /// This will flag the view in scope as an observer of this data bucket,
+    ///   and any modifications to data at this key will cause this view to be re-rendered.
+    /// It will also cause all observers of this view to be re-rendered after processing
+    ///   of the current event is finished.
     pub fn data_mut<T: 'static>(&mut self, key: &str) -> DataMutRef<T> {
         self.app.add_observer(self.view_id.clone(), self.node.clone());
         self.app.data_mut(key)
     }
 }
 
-type DataRef<'a, T> = RefRef<'a, HashMap<TypedKey, Box<Any>>, T>;
-type DataMutRef<'a, T> = RefMutRef<'a, HashMap<TypedKey, Box<Any>>, &'a mut T>;
+/// Reference to generic app data
+pub struct DataRef<'a, T: 'a> {
+    _owner: Ref<'a, T>,
+    reference: *const T,
+}
+
+/// Mutable reference to generic app data
+pub struct DataMutRef<'a, T: 'a> {
+    _owner: RefMut<'a, T>,
+    reference: *mut T,
+}
+
+impl <'a, T> Deref for DataRef<'a, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.reference }
+    }
+}
+
+impl <'a, T> Deref for DataMutRef<'a, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.reference }
+    }
+}
+
+impl <'a, T> DerefMut for DataMutRef<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.reference }
+    }
+}
 
 impl <'doc> QuasarApp<'doc> {
     pub fn bind<R: 'static + Renderable>(&self, component: R, el: &str) -> Views<'doc, R> {
@@ -133,10 +173,14 @@ impl <'doc> QuasarApp<'doc> {
 
     pub fn data<T: 'static>(&self, key: &str) -> DataRef<T> {
         let data_id = TypedKey::new::<T>(key);
-        RefRef::new(self.state.borrow()).map(|state| {
+        let owned_ref = Ref::map(self.state.borrow(), |state| {
             let entry = state.get(&data_id).unwrap();
             entry.downcast_ref().unwrap()
-        })
+        });
+        DataRef {
+            reference: &*owned_ref,
+            _owner: owned_ref
+        }
     }
 
     pub fn data_mut<T: 'static>(&self, key: &str) -> DataMutRef<T> {
@@ -152,13 +196,15 @@ impl <'doc> QuasarApp<'doc> {
             }
         }
 
-        RefMutRef::new(self.state.borrow_mut()).map(|state| {
-            // TODO: Look into getting an `OwnedMutRef` that supports `map_mut`
-            let state = state as *const HashMap<_, _> as *mut HashMap<TypedKey, Box<Any>>;
-            let mut state = unsafe { &mut *state };
+
+        let mut owned_ref = RefMut::map(self.state.borrow_mut(), |mut state| {
             let mut entry = state.get_mut(&data_id).unwrap();
-            entry.downcast_mut().unwrap()
-        })
+            entry.downcast_mut::<T>().unwrap()
+        });
+        DataMutRef {
+            reference: &mut *owned_ref,
+            _owner: owned_ref
+        }
     }
 
 
