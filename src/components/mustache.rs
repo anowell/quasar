@@ -3,7 +3,7 @@ use rustc_serialize::Encodable;
 use ::std::collections::HashMap;
 use super::{Component, Renderable, Properties};
 
-impl <D: 'static + Encodable> Renderable for Component<D, Template> {
+impl<D: 'static + Encodable> Renderable for Component<D, Template> {
     fn props(&self) -> &[&'static str] {
         &self.props
     }
@@ -16,12 +16,12 @@ impl <D: 'static + Encodable> Renderable for Component<D, Template> {
 
         match data {
             Data::Map(ref mut map) => {
-                let mustache_props = props.into_iter().map(|(k,v)| {
-                    (k.to_string(), Data::StrVal(v))
-                }).collect();
+                let mustache_props = props.into_iter()
+                    .map(|(k, v)| (k.to_string(), Data::StrVal(v)))
+                    .collect();
                 map.insert("props".to_string(), Data::Map(mustache_props));
             }
-            _ => panic!("Unexpected data encoding")
+            _ => panic!("Unexpected data encoding"),
         }
 
         let mut output = Vec::new();

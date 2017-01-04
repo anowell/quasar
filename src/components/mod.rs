@@ -12,7 +12,9 @@ pub trait Renderable: Downcast {
     ///
     /// Any property names returned will be queried for
     /// there value and added to `props` before calling `render`
-    fn props(&self) -> &[&'static str] { &[] }
+    fn props(&self) -> &[&'static str] {
+        &[]
+    }
 
     /// Render the component to a string
     ///
@@ -31,14 +33,14 @@ pub struct Component<D, T> {
     pub props: Vec<&'static str>,
 }
 
-impl <D, T> Deref for Component<D, T> {
+impl<D, T> Deref for Component<D, T> {
     type Target = D;
     fn deref(&self) -> &Self::Target {
         &self.data
     }
 }
 
-impl <D, T> DerefMut for Component<D, T> {
+impl<D, T> DerefMut for Component<D, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.data
     }

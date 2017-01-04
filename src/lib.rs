@@ -64,7 +64,7 @@ pub struct AppContext<'doc> {
     node: Rc<HtmlNode<'doc>>,
 }
 
-impl <'doc> AppContext<'doc> {
+impl<'doc> AppContext<'doc> {
     /// Get app data for a specific key
     ///
     /// This will flag the view in scope as an observer of this data bucket,
@@ -98,27 +98,27 @@ pub struct DataMutRef<'a, T: 'a> {
     reference: *mut T,
 }
 
-impl <'a, T> Deref for DataRef<'a, T> {
+impl<'a, T> Deref for DataRef<'a, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.reference }
     }
 }
 
-impl <'a, T> Deref for DataMutRef<'a, T> {
+impl<'a, T> Deref for DataMutRef<'a, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.reference }
     }
 }
 
-impl <'a, T> DerefMut for DataMutRef<'a, T> {
+impl<'a, T> DerefMut for DataMutRef<'a, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { &mut *self.reference }
     }
 }
 
-impl <'doc> QuasarApp<'doc> {
+impl<'doc> QuasarApp<'doc> {
     pub fn bind<R: 'static + Renderable>(&self, component: R, el: &str) -> Views<'doc, R> {
         let nodes = self.document.element_query_all(el);
         if nodes.is_empty() {
@@ -129,10 +129,7 @@ impl <'doc> QuasarApp<'doc> {
         {
             let view_id = TypedKey::new::<R>(el);
             let mut components = self.components.borrow_mut();
-            components.insert(
-                view_id,
-                rc_component.clone()
-            );
+            components.insert(view_id, rc_component.clone());
         }
 
         let mut views = Vec::new();
@@ -157,7 +154,7 @@ impl <'doc> QuasarApp<'doc> {
         }
     }
 
-    pub fn view<R: 'static + Renderable>(&self, el: &str) -> View<'doc, R>  {
+    pub fn view<R: 'static + Renderable>(&self, el: &str) -> View<'doc, R> {
         let view_id = TypedKey::new::<R>(el);
         let components = self.components.borrow();
         let component = components.get(&view_id).unwrap().clone();
@@ -179,7 +176,7 @@ impl <'doc> QuasarApp<'doc> {
         });
         DataRef {
             reference: &*owned_ref,
-            _owner: owned_ref
+            _owner: owned_ref,
         }
     }
 
@@ -203,7 +200,7 @@ impl <'doc> QuasarApp<'doc> {
         });
         DataMutRef {
             reference: &mut *owned_ref,
-            _owner: owned_ref
+            _owner: owned_ref,
         }
     }
 
@@ -247,8 +244,10 @@ pub struct Views<'doc, R> {
     handlers: Rc<RefCell<Vec<Box<Fn(Event<R>) + 'doc>>>>,
 }
 
-impl <'doc, R: Renderable + 'static> Views<'doc, R> {
-    pub fn on<F>(&self, event: EventType, f: F) where F: Fn(Event<R>) + 'doc {
+impl<'doc, R: Renderable + 'static> Views<'doc, R> {
+    pub fn on<F>(&self, event: EventType, f: F)
+        where F: Fn(Event<R>) + 'doc
+    {
         // Insert the handler into self and return it's index
         let offset = {
             let mut handlers = self.handlers.borrow_mut();
@@ -279,7 +278,9 @@ impl <'doc, R: Renderable + 'static> Views<'doc, R> {
                 };
 
                 // Process the event with the target and originating view
-                println!("Event fired on {:?} for target {:?}", &view.node, evt.target);
+                println!("Event fired on {:?} for target {:?}",
+                         &view.node,
+                         evt.target);
                 {
                     let event = Event {
                         app: AppContext {
@@ -287,9 +288,7 @@ impl <'doc, R: Renderable + 'static> Views<'doc, R> {
                             view_id: TypedKey::new::<R>(&el),
                             node: node.clone(),
                         },
-                        target: Element {
-                            node: evt.target.expect("Event did not have a target") ,
-                        },
+                        target: Element { node: evt.target.expect("Event did not have a target") },
                         view: view,
                     };
                     let inner_handlers = handlers.borrow();
@@ -338,8 +337,10 @@ pub struct View<'doc, R> {
     phantom: PhantomData<R>,
 }
 
-impl <'doc, R: 'static + Renderable> View<'doc, R> {
-    pub fn on<F>(&self, event: EventType, f: F) where F: Fn(Event<R>) + 'doc {
+impl<'doc, R: 'static + Renderable> View<'doc, R> {
+    pub fn on<F>(&self, event: EventType, f: F)
+        where F: Fn(Event<R>) + 'doc
+    {
         {
             let app = self.app.clone();
             let el = self.el.clone();
@@ -356,7 +357,9 @@ impl <'doc, R: 'static + Renderable> View<'doc, R> {
                     phantom: PhantomData,
                 };
 
-                println!("Event fired on {:?} for target {:?}", &view.node, evt.target);
+                println!("Event fired on {:?} for target {:?}",
+                         &view.node,
+                         evt.target);
                 let rendered = {
                     {
                         let target_node = evt.target.expect("Event did not have a target");
@@ -383,18 +386,14 @@ impl <'doc, R: 'static + Renderable> View<'doc, R> {
     }
 
     pub fn data(&self) -> Ref<R> {
-        Ref::map(self.component.borrow(), |r| {
-            r.downcast_ref().unwrap()
-        })
+        Ref::map(self.component.borrow(), |r| r.downcast_ref().unwrap())
     }
 
     pub fn data_mut(&mut self) -> RefMut<R> {
         // Before handing back mutable the mutable component,
         // enqueue rendering of the original view that owns this data
         self.app.enqueue_render(&self);
-        RefMut::map(self.component.borrow_mut(), |r| {
-            r.downcast_mut().unwrap()
-        })
+        RefMut::map(self.component.borrow_mut(), |r| r.downcast_mut().unwrap())
     }
 }
 
@@ -415,10 +414,10 @@ impl TypedKey {
 
 #[derive(Debug)]
 pub struct Element<'doc> {
-    node: HtmlNode<'doc>
+    node: HtmlNode<'doc>,
 }
 
-impl <'doc> Element<'doc>{
+impl<'doc> Element<'doc> {
     pub fn set(&self, prop: &str, value: &str) {
         self.node.prop_set_str(prop, value);
     }
