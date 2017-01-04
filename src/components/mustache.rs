@@ -3,7 +3,7 @@ use rustc_serialize::Encodable;
 use ::std::collections::HashMap;
 use super::{Component, Renderable, Properties};
 
-impl <D: Encodable> Renderable for Component<D, Template> {
+impl <D: 'static + Encodable> Renderable for Component<D, Template> {
     fn props(&self) -> &[&'static str] {
         &self.props
     }

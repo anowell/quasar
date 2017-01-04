@@ -2,6 +2,9 @@ extern crate webplatform;
 extern crate rustc_serialize;
 extern crate owning_ref;
 
+#[macro_use]
+extern crate downcast_rs;
+
 #[cfg(feature = "mustache")]
 extern crate mustache;
 
@@ -17,6 +20,7 @@ use std::collections::HashMap;
 use std::any::{Any, TypeId};
 use std::cell::{RefCell, Ref, RefMut};
 use std::rc::Rc;
+use std::marker::PhantomData;
 use webplatform::{Document, HtmlNode};
 
 #[cfg(feature = "mustache")]
@@ -36,6 +40,7 @@ pub fn init<'a, 'doc: 'a>() -> QuasarApp<'a> {
 }
 
 type DataStore = HashMap<TypedKey, Box<Any>>;
+type RenderableStore = HashMap<TypedKey, Rc<RefCell<Renderable>>>;
 type ObserverStore<'doc> = HashMap<TypedKey, Vec<Rc<HtmlNode<'doc>>>>;
 type RenderQueue<'doc> = Vec<(TypedKey, Rc<HtmlNode<'doc>>)>;
 
@@ -46,7 +51,7 @@ type RenderQueue<'doc> = Vec<(TypedKey, Rc<HtmlNode<'doc>>)>;
 #[derive(Clone)]
 pub struct QuasarApp<'doc> {
     document: Rc<Document<'doc>>,
-    components: Rc<RefCell<DataStore>>,
+    components: Rc<RefCell<RenderableStore>>,
     state: Rc<RefCell<DataStore>>,
     observers: Rc<RefCell<ObserverStore<'doc>>>,
     render_queue: Rc<RefCell<RenderQueue<'doc>>>,
@@ -80,21 +85,21 @@ impl <'doc> QuasarApp<'doc> {
             panic!("querySelectorAll found no results for {}", &el);
         }
 
+        let rc_component = Rc::new(RefCell::new(component));
         {
             let view_id = TypedKey::new::<R>(el);
             let mut components = self.components.borrow_mut();
             components.insert(
                 view_id,
-                Box::new(Rc::new(RefCell::new(component)))
+                rc_component.clone()
             );
         }
 
-        let rc_component = self.component(el);
         let mut views = Vec::new();
         for node in nodes {
             {
                 let component = rc_component.borrow();
-                let props = lookup_props(&node, R::props(&component));
+                let props = lookup_props(&node, component.props());
                 node.html_set(&component.render(props));
             }
             let view = View {
@@ -102,6 +107,7 @@ impl <'doc> QuasarApp<'doc> {
                 node: Rc::new(node),
                 el: el.to_owned(),
                 component: rc_component.clone(),
+                phantom: PhantomData,
             };
             views.push(view);
         }
@@ -112,27 +118,22 @@ impl <'doc> QuasarApp<'doc> {
     }
 
     pub fn view<R: 'static + Renderable>(&self, el: &str) -> View<'doc, R>  {
-        let component = self.component(el);
+        let view_id = TypedKey::new::<R>(el);
+        let components = self.components.borrow();
+        let component = components.get(&view_id).unwrap().clone();
+
         View {
             app: self.clone(),
             node: Rc::new(self.document.element_query(el).unwrap()),
             el: el.to_owned(),
             component: component,
+            phantom: PhantomData,
         }
-    }
-
-    fn component<R: 'static + Renderable>(&self, el: &str) -> Rc<RefCell<R>>  {
-        let view_id = TypedKey::new::<R>(el);
-        let components = self.components.borrow();
-        let entry = components.get(&view_id).unwrap();
-        let component: &Rc<RefCell<R>> = entry.downcast_ref().unwrap();
-        component.clone()
     }
 
     pub fn data<T: 'static>(&self, key: &str) -> DataRef<T> {
         let data_id = TypedKey::new::<T>(key);
         RefRef::new(self.state.borrow()).map(|state| {
-            println!("FOOFOO1");
             let entry = state.get(&data_id).unwrap();
             entry.downcast_ref().unwrap()
         })
@@ -155,7 +156,6 @@ impl <'doc> QuasarApp<'doc> {
             // TODO: Look into getting an `OwnedMutRef` that supports `map_mut`
             let state = state as *const HashMap<_, _> as *mut HashMap<TypedKey, Box<Any>>;
             let mut state = unsafe { &mut *state };
-            println!("FOOFOO2");
             let mut entry = state.get_mut(&data_id).unwrap();
             entry.downcast_mut().unwrap()
         })
@@ -180,9 +180,7 @@ impl <'doc> QuasarApp<'doc> {
             let (ref view_id, ref node) = *item;
             let components = self.components.borrow();
             let entry = components.get(&view_id).unwrap();
-            println!("FIXME/REGRESSION: downcasting to Box<Renderable> doesn't work.");
-            let component: &Rc<RefCell<Renderable>> = entry.downcast_ref().unwrap();
-            let component = component.borrow();
+            let component = entry.borrow();
             let props = lookup_props(&node, component.props());
             node.html_set(&component.render(props));
         }
@@ -231,6 +229,7 @@ impl <'doc, R: Renderable + 'static> Views<'doc, R> {
                     el: el.clone(),
                     node: node.clone(),
                     component: component.clone(),
+                    phantom: PhantomData,
                 };
 
                 // Process the event with the target and originating view
@@ -289,7 +288,8 @@ pub struct View<'doc, R> {
     // Fully qualified query selector - append to any parent selectors used to get to this view
     el: String,
     node: Rc<HtmlNode<'doc>>,
-    component: Rc<RefCell<R>>,
+    component: Rc<RefCell<Renderable>>,
+    phantom: PhantomData<R>,
 }
 
 impl <'doc, R: 'static + Renderable> View<'doc, R> {
@@ -307,6 +307,7 @@ impl <'doc, R: 'static + Renderable> View<'doc, R> {
                     el: el.clone(),
                     node: node.clone(),
                     component: component.clone(),
+                    phantom: PhantomData,
                 };
 
                 println!("Event fired on {:?} for target {:?}", &view.node, evt.target);
@@ -336,14 +337,18 @@ impl <'doc, R: 'static + Renderable> View<'doc, R> {
     }
 
     pub fn data(&self) -> Ref<R> {
-        self.component.borrow()
+        Ref::map(self.component.borrow(), |r| {
+            r.downcast_ref().unwrap()
+        })
     }
 
     pub fn data_mut(&mut self) -> RefMut<R> {
         // Before handing back mutable the mutable component,
         // enqueue rendering of the original view that owns this data
         self.app.enqueue_render(&self);
-        self.component.borrow_mut()
+        RefMut::map(self.component.borrow_mut(), |r| {
+            r.downcast_mut().unwrap()
+        })
     }
 }
 

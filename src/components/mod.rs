@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
+use downcast_rs::Downcast;
 
 #[cfg(feature = "mustache")]
 mod mustache;
 
 pub type Properties = HashMap<&'static str, String>;
 
-pub trait Renderable {
+pub trait Renderable: Downcast {
     /// Register interest in specific element properties
     ///
     /// Any property names returned will be queried for
@@ -19,6 +20,8 @@ pub trait Renderable {
     /// that were returned when calling `props`
     fn render(&self, props: Properties) -> String;
 }
+
+impl_downcast!(Renderable);
 
 /// Component for templating
 #[derive(Debug)]

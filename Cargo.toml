@@ -5,8 +5,9 @@ authors = ["Anthony Nowell <anowell@gmail.com>"]
 
 [dependencies]
 rustc-serialize = "0.3.18"
-mustache = { version = "0.8.0", optional = true }
 owning_ref = "0.2"
+downcast-rs = "0.1.2"
+mustache = { version = "0.8.0", optional = true }
 
 [dependencies.webplatform]
 git = "https://github.com/anowell/rust-webplatform.git"
