@@ -34,11 +34,11 @@ pub fn init(app: &QuasarApp) {
         "##).expect("failed to compile cat_item template")
     };
 
-    app.bind(cat_list, ".cat-list");
+    app.bind(".cat-list", cat_list);
     // TODO: allow chaining binds for nested
-    app.bind(cat_item, "Cat")
-        .on(EventType::Click, |evt| {
-            let catname = evt.target.get("catname");
-            println!("cat {} is in {:?}", &catname, &evt.target);
-        });
+    // app.bind_all(".cat-list Cat", cat_item);
+        // .on(EventType::Click, |evt| {
+        //     let catname = evt.target.get("catname");
+        //     println!("cat {} is in {:?}", &catname, &evt.target);
+        // });
 }

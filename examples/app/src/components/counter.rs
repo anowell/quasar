@@ -19,9 +19,10 @@ pub fn init(app: &QuasarApp) {
         "##).expect("failed to compile counter template")
     };
 
-    app.bind(component, "#counter")
-        // .query("button")
-        .on(EventType::Click, |mut evt| {
-            evt.view.data_mut().count += 1;
-        });
+    let view = app.bind("#counter", component);
+
+    let element = view.query("button");
+    element.on(EventType::Click, |mut evt| {
+        evt.view.data_mut().count += 1;
+    });
 }

@@ -10,8 +10,6 @@ fn main() {
     let app = quasar::init();
     println!("Starting...");
 
-    //components::hello::init(&app);
-    components::counter::init(&app);
-    //components::cat_list::init(&app);
+    components::init(&app);
     app.spin();
 }

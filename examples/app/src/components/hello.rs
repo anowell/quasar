@@ -19,7 +19,7 @@ pub fn init(app: &QuasarApp) {
         "##).expect("failed to compile hello template")
     };
 
-    app.bind(component, "#hello")
+    app.bind("#hello", component)
         // .query("#name-field")
         .on(EventType::Input, |mut evt| {
             evt.view.data_mut().name = evt.target.get("value");

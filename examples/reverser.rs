@@ -25,13 +25,14 @@ fn main() {
         "##).expect("failed to compile my_widget template")
     };
 
-    let views = app.bind(my_widget, "Reverser");
-    views.on(EventType::Click, |mut evt| {
+    // TODO: this example makes less sense with how things are evolving.
+    let view = app.bind("Reverser", my_widget);
+    view.on(EventType::Click, |mut evt| {
         println!("on click called");
         let mut data = evt.view.data_mut();
         data.message = data.message.chars().rev().collect::<String>();
     });
 
-    println!("End of main");
     app.spin();
+    println!("End of main");
 }
