@@ -15,8 +15,9 @@ Oh, and black hole's form from the collapse of a core of iron.. you know, the on
 ---
 
 Everything is experimental, half-baked, full of caveats, and subject to change. But some basic principles are beginning to emerge. With Quasar...
-- **all your app and component state are statically typed in data structures of your choosing**
-- **updating state in your application automatically updates views** (unless you update your state via interior mutability)
+- **your types for component and app state propogate into events** (no need to guess the type or structure of state).
+- **updating state in your application automatically updates relevant views** (unless you update your state via interior mutability)
+- **bring your own templating engine and reuse it for server rendering** (though quasar will provide a default OOB engine - TBD)
 
 ## How it works
 
@@ -52,7 +53,7 @@ fn main() {
         "##).expect("failed to compile counter template")
     };
 
-    app.bind(component, "#counter")
+    app.bind("#counter", component)
         .on(EventType::Click, |mut evt| {
             evt.view.data_mut().count += 1;
         });
