@@ -14,7 +14,7 @@ mod nodes;
 
 pub use events::{EventType};
 pub use components::{Component, Properties, Renderable};
-pub use nodes::{init, QuasarApp, Node, NodeBind, NodeBindRef, Queryable, HasBind};
+pub use nodes::{init, QuasarApp, Node, View, RefView, Queryable, HasBind};
 pub use rustc_serialize::json::Json;
 
 use nodes::lookup_props;
@@ -37,7 +37,7 @@ pub use mustache::compile_str;
 
 
 impl<'doc> QuasarApp<'doc> {
-    // pub fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> NodeBind<'doc, R> {
+    // pub fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> View<'doc, R> {
     //     let node = self.document.element_query(el).expect("querySelector found no results");
 
     //     let props = lookup_props(&node, component.props());
@@ -45,7 +45,7 @@ impl<'doc> QuasarApp<'doc> {
 
     //     let binding = self.app.insert_binding(el, component, node);
 
-    //     NodeBind::new(self.app.clone(), binding)
+    //     View::new(self.app.clone(), binding)
     // }
     // pub fn bind_all<R: 'static + Renderable>(&self, el: &str, component: R) -> Views<'doc, R> {
     //     let nodes = self.document.element_query_all(el);
@@ -310,7 +310,7 @@ pub struct Event<'doc, N> {
 //     }
 // }
 
-// impl<'doc, R: 'static + Renderable> NodeBind<'dNodBindRef, NodeBindRefEach<'doc, R>, R> {
+// impl<'doc, R: 'static + Renderable> View<'dNodBindRef, RefViewEach<'doc, R>, R> {
 //     pub fn on<F>(&self, event: EventType, f: F)
 //         where F: Fn(Event<View<'doc, R>, R>) + 'doc
 //     {

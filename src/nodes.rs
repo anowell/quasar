@@ -18,7 +18,7 @@ pub struct Node<'doc> {
     node: HtmlNode<'doc>,
 }
 
-pub struct NodeBind<'doc, R> {
+pub struct View<'doc, R> {
     app: Rc<AppState<'doc>>,
     el: String,
     // TODO: probably need the HtmlNode once supporting `query`
@@ -27,7 +27,7 @@ pub struct NodeBind<'doc, R> {
     // TODO: generic marker SingleBind or Multibind to indicate if we can iterate
 }
 
-pub struct NodeBindRef<'doc, R, S> {
+pub struct RefView<'doc, R, S> {
     app: Rc<AppState<'doc>>,
     el: String,
     // TODO: probably need the HtmlNode once supporting `query`
@@ -41,14 +41,14 @@ pub struct NodeBindRef<'doc, R, S> {
 pub struct SingleBind;
 pub struct MultiBind;
 
-// Can we encompass this as a variant of NodeBindRef that can enumerate?
-// pub struct NodeBindRefEach<'doc, R, S> {
+// Can we encompass this as a variant of RefView that can enumerate?
+// pub struct RefViewEach<'doc, R, S> {
 //     app: Rc<AppState<'doc>>,
 //     el: String,
 //     binding: Rc<RefCell<Binding<'doc>>>,
 //     phantom: PhantomData<R>,
 //     mapper: Rc<Fn(&R) -> &S>,
-//     // NodeBindRef plus ability to iterate
+//     // RefView plus ability to iterate
 // }
 
 
@@ -58,7 +58,7 @@ pub trait Queryable<'doc> {
     fn query(&self, el: &str) -> Self::Q;
     // fn query_all(&self, el: &str) -> Vec<Self>
 
-    fn bind<R>(&self, el: &str, component: R) -> NodeBind<'doc, R> where R: 'static + Renderable;
+    fn bind<R>(&self, el: &str, component: R) -> View<'doc, R> where R: 'static + Renderable;
     // fn bind_each(&self, el: &str, component: Vec<R>) -> BindEachNode<'doc, R>;
 }
 
@@ -68,11 +68,11 @@ pub trait HasBind<'doc> {
     fn data(&self) -> Ref<Self::R>;
     fn data_mut(&mut self) -> RefMut<Self::R>;
 
-    fn bind_ref<S, F>(&self, el: &str, map_fn: F) -> NodeBindRef<'doc, Self::R, S>
+    fn bind_ref<S, F>(&self, el: &str, map_fn: F) -> RefView<'doc, Self::R, S>
          where S: Renderable + 'static,
                F: 'static + for<'a> Fn(&'a Self::R) -> &'a S;
 
-    fn bind_ref_each<S, F>(&self, el: &str, map_fn: F) -> NodeBindRef<'doc, Self::R, Vec<S>>
+    fn bind_ref_each<S, F>(&self, el: &str, map_fn: F) -> RefView<'doc, Self::R, Vec<S>>
         where S: Renderable + 'static,
             F: 'static + for<'a> Fn(&'a Self::R) -> &'a Vec<S>;
 }
@@ -88,7 +88,7 @@ impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
         }
     }
 
-    fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> NodeBind<'doc, R> {
+    fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> View<'doc, R> {
         let node = self.document.element_query(el).expect("querySelector found no results");
 
         let props = lookup_props(&node, component.props());
@@ -96,7 +96,7 @@ impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
 
         let binding = self.app.insert_binding(el, component, node);
 
-        NodeBind {
+        View {
             app: self.app.clone(),
             el: "TODO: USE A UUID instead of el".to_string(),
             binding: binding,
@@ -118,7 +118,7 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
         }
     }
 
-    fn bind<RR>(&self, el: &str, component: RR) -> NodeBind<'doc, RR>
+    fn bind<RR>(&self, el: &str, component: RR) -> View<'doc, RR>
         where RR: 'static + Renderable
     {
         let node = self.node.element_query(el).expect("querySelector found no results");
@@ -127,7 +127,7 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
 
         let binding = self.app.insert_binding(el, component, node);
 
-        NodeBind {
+        View {
             app: self.app.clone(),
             el: "TODO: USE A UUID instead of el".to_string(),
             binding: binding,
@@ -138,13 +138,13 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
 }
 
 
-impl<'doc, R: 'static + Renderable> Queryable<'doc> for NodeBind<'doc, R> {
+impl<'doc, R: 'static + Renderable> Queryable<'doc> for View<'doc, R> {
     type Q = Self;
 
     fn query(&self, el: &str) -> Self::Q {
         let node = self.binding.borrow().node.element_query(el).expect("querySelect returned no result");
 
-        NodeBind {
+        View {
             app: self.app.clone(),
             el: "TODO: USE A UUID instead of el".to_string(),
             binding: self.binding.clone(),
@@ -152,7 +152,7 @@ impl<'doc, R: 'static + Renderable> Queryable<'doc> for NodeBind<'doc, R> {
         }
     }
 
-    fn bind<RR>(&self, el: &str, component: RR) -> NodeBind<'doc, RR>
+    fn bind<RR>(&self, el: &str, component: RR) -> View<'doc, RR>
         where RR: 'static + Renderable
     {
         let node = self.binding.borrow().node.element_query(el).expect("querySelector found no results");
@@ -161,7 +161,7 @@ impl<'doc, R: 'static + Renderable> Queryable<'doc> for NodeBind<'doc, R> {
 
         let binding = self.app.insert_binding(el, component, node);
 
-        NodeBind {
+        View {
             app: self.app.clone(),
             binding: binding,
             el: el.to_owned(),
@@ -170,7 +170,7 @@ impl<'doc, R: 'static + Renderable> Queryable<'doc> for NodeBind<'doc, R> {
     }
 }
 
-impl<'doc, R: 'static + Renderable> NodeBind<'doc, R> {
+impl<'doc, R: 'static + Renderable> View<'doc, R> {
     pub fn on<F>(&self, event: EventType, f: F)
         where F: Fn(Event<Self>) + 'doc
     {
@@ -182,7 +182,7 @@ impl<'doc, R: 'static + Renderable> NodeBind<'doc, R> {
             let binding_borrow = self.binding.borrow();
             let ref current_node = binding_borrow.node;
             current_node.on(event.name(), move |evt| {
-                let node = NodeBind {
+                let node = View {
                     app: app.clone(),
                     el: el.clone(),
                     binding: binding.clone(),
@@ -210,7 +210,7 @@ impl<'doc, R: 'static + Renderable> NodeBind<'doc, R> {
 // More impls
 // **********************************
 
-impl<'doc, R: 'static + Renderable> HasBind<'doc> for NodeBind<'doc, R> {
+impl<'doc, R: 'static + Renderable> HasBind<'doc> for View<'doc, R> {
     type R = R;
 
     // TODO: this function should quietly create a parent view for updating when the array changes,
@@ -254,7 +254,7 @@ impl<'doc, R: 'static + Renderable> HasBind<'doc> for NodeBind<'doc, R> {
     // }
 
 
-    fn bind_ref<S, F>(&self, el: &str, map_fn: F) -> NodeBindRef<'doc, R, S>
+    fn bind_ref<S, F>(&self, el: &str, map_fn: F) -> RefView<'doc, R, S>
         where S: Renderable + 'static,
               F: Fn(&R) -> &S + 'static,
     {
@@ -269,7 +269,7 @@ impl<'doc, R: 'static + Renderable> HasBind<'doc> for NodeBind<'doc, R> {
             binding.add(node, &map_fn);
         }
 
-        NodeBindRef {
+        RefView {
             app: self.app.clone(),
             binding: self.binding.clone(),
             el: el.to_owned(),
@@ -279,7 +279,7 @@ impl<'doc, R: 'static + Renderable> HasBind<'doc> for NodeBind<'doc, R> {
     }
 
 
-    fn bind_ref_each<S, F>(&self, el: &str, map_fn: F) -> NodeBindRef<'doc, R, Vec<S>>
+    fn bind_ref_each<S, F>(&self, el: &str, map_fn: F) -> RefView<'doc, R, Vec<S>>
         where S: Renderable + 'static,
               F: 'static + Fn(&R) -> &Vec<S>,
     {
@@ -304,7 +304,7 @@ impl<'doc, R: 'static + Renderable> HasBind<'doc> for NodeBind<'doc, R> {
         }
 
         // TODO: children should get a mapper for each component:: Rc::new(move |ref data| { &mapper(&data)[i] }),
-        NodeBindRef {
+        RefView {
             app: self.app.clone(),
             binding: self.binding.clone(),
             el: el.to_owned(),
