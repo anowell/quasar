@@ -11,5 +11,7 @@ fn main() {
     println!("Starting...");
 
     components::init(&app);
+    println!("Spinning...");
     app.spin();
+    println!("End of main...");
 }

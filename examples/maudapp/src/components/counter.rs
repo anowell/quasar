@@ -21,6 +21,6 @@ pub fn init(app: &QuasarApp) {
     app.bind("#counter", component)
         // .query("button")
         .on(EventType::Click, |mut evt| {
-            evt.view.data_mut().count += 1;
+            evt.binding.data_mut().count += 1;
         });
 }

@@ -39,21 +39,23 @@ pub fn init(app: &QuasarApp) {
     };
 
     let view = app.bind("#todo-list", component);
-    let item_list = view.bind_map_each("#todo-ul", |data| { &data.items });
 
-    view.query("button")
+    let item_list = view.bind_ref_each("#todo-ul", |data| { &data.items });
+
+
+    view //.query("button")
         .on(EventType::Click, |mut evt| {
-            let message = evt.view.query("#message").get("value");
+            let message = "foo".to_string(); //evt.binding.query("#message").get("value");
             let item = TodoItem { label: message, complete: false };
-            evt.view.data_mut().items.push(item);
+            evt.binding.data_mut().items.push(item);
         });
 
     // TOOD: shorthand for operation on collection of children views
-    // for child in children {
-    //     child.query(".todo-item input")
+    // for item in item_list.iter() {
+    //     item.query(".todo-item input")
     //         .on(EventType::Click, |mut evt| {
     //             let state = evt.target.get("value") == "checked";
-    //             evt.view.data_mut().complete = state;
+    //             evt.binding.data_mut().complete = state;
     //         });
     // }
 

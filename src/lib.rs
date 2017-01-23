@@ -10,55 +10,43 @@ extern crate mustache;
 mod events;
 mod components;
 mod state;
+mod nodes;
 
 pub use events::{EventType};
 pub use components::{Component, Properties, Renderable};
+pub use nodes::{init, QuasarApp, Node, NodeBind, NodeBindRef, Queryable, HasBind};
 pub use rustc_serialize::json::Json;
 
+use nodes::lookup_props;
 use state::{AppState, Binding, DataRef, DataMutRef, TypedKey};
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::cell::{RefCell, Ref, RefMut};
 use std::rc::Rc;
 use std::marker::PhantomData;
-use webplatform::{Document, HtmlNode};
+use webplatform::HtmlNode;
 
 #[cfg(feature = "mustache")]
 pub use mustache::compile_str;
 
-pub fn init<'a, 'doc: 'a>() -> QuasarApp<'a> {
-    QuasarApp {
-        document: Rc::new(webplatform::init()),
-        app: Rc::new(AppState::new())
-    }
-}
 
 
 
 
-/// The main app object instantiated by calling `quasar::init()`
-pub struct QuasarApp<'doc> {
-    document: Rc<Document<'doc>>,
-    app: Rc<AppState<'doc>>,
-}
+
 
 
 impl<'doc> QuasarApp<'doc> {
-    pub fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> View<'doc, R> {
-        let node = self.document.element_query(el).expect("querySelector found no results");
+    // pub fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> NodeBind<'doc, R> {
+    //     let node = self.document.element_query(el).expect("querySelector found no results");
 
-        let props = lookup_props(&node, component.props());
-        node.html_set(&component.render(props));
+    //     let props = lookup_props(&node, component.props());
+    //     node.html_set(&component.render(props));
 
-        let binding = self.app.insert_binding(el, component, node);
+    //     let binding = self.app.insert_binding(el, component, node);
 
-        View {
-            app: self.app.clone(),
-            el: el.to_owned(),
-            binding: binding,
-            phantom: PhantomData,
-        }
-    }
+    //     NodeBind::new(self.app.clone(), binding)
+    // }
     // pub fn bind_all<R: 'static + Renderable>(&self, el: &str, component: R) -> Views<'doc, R> {
     //     let nodes = self.document.element_query_all(el);
     //     if nodes.is_empty() {
@@ -133,38 +121,38 @@ impl<'doc> AppContext<'doc> {
 }
 
 /// A collection of `View`s returned from a query selector
-pub struct Views<'doc, R> {
-    views: Rc<Vec<View<'doc, R>>>,
+//pub struct Views<'doc, R> {
+    // views: Rc<Vec<View<'doc, R>>>,
     // Views may have multiple handlers, hence Vec
     // We want interior mutability, hence RefCell
     // A handler may map to multiple views
     // handlers: Rc<RefCell<Vec<Box<Fn(Event<R>) + 'doc>>>>,
-}
+// }
 
-impl <'a, 'doc, R> IntoIterator for &'a Views<'doc, R> {
-    type Item = &'a View<'doc, R>;
-    type IntoIter = ::std::slice::Iter<'a, View<'doc, R>>;
+// impl <'a, 'doc, R> IntoIterator for &'a Views<'doc, R> {
+//     type Item = &'a View<'doc, R>;
+//     type IntoIter = ::std::slice::Iter<'a, View<'doc, R>>;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.views.iter()
-    }
-}
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.views.iter()
+//     }
+// }
 
-impl <'doc, R> FromIterator<View<'doc, R>> for Views<'doc, R> {
-    fn from_iter<I: IntoIterator<Item=View<'doc, R>>>(iter: I) -> Self {
-        let mut views = Vec::new();
-        for view in iter {
-            views.push(view);
-        }
+// impl <'doc, R> FromIterator<View<'doc, R>> for Views<'doc, R> {
+//     fn from_iter<I: IntoIterator<Item=View<'doc, R>>>(iter: I) -> Self {
+//         let mut views = Vec::new();
+//         for view in iter {
+//             views.push(view);
+//         }
 
-        Views {
-            views: Rc::new(views),
-            // handlers: Rc::new(RefCell::new(Vec::new()))
-        }
-    }
-}
+//         Views {
+//             views: Rc::new(views),
+//             // handlers: Rc::new(RefCell::new(Vec::new()))
+//         }
+//     }
+// }
 
-impl<'doc, R: Renderable + 'static> Views<'doc, R> {
+// impl<'doc, R: Renderable + 'static> Views<'doc, R> {
     // pub fn on<F>(&self, event: EventType, f: F)
     //     where F: Fn(Event<R>) + 'doc
     // {
@@ -234,40 +222,13 @@ impl<'doc, R: Renderable + 'static> Views<'doc, R> {
     //     }
     //     println!("{} On handlers registered", self.views.len());
     // }
-}
+// }
 
-fn lookup_props<'doc>(node: &HtmlNode<'doc>, keys: &[&'static str]) -> Properties {
-    let mut props = Properties::new();
-    for prop in keys {
-        let mut val = node.prop_get_str(prop);
-        if val.is_empty() {
-            val = node.attr_get_str(prop);
-        }
-        props.insert(prop, val);
-    }
-    props
-}
 
-pub struct View<'doc, R> {
-    app: Rc<AppState<'doc>>,
-    el: String,
-    binding: Rc<RefCell<Binding<'doc>>>,
-    phantom: PhantomData<R>,
-}
 
-pub struct MappedView<'doc, R, S> {
-    view: View<'doc, R>,
-    mapper: Rc<Fn(&R) -> &S>,
-}
 
-impl<'doc, R: 'static + Renderable, S: 'static + Renderable> MappedView<'doc, R, S> {
-    // not public - for internal convenience only
-    fn clone(&self) -> MappedView<'doc, R, S> {
-        MappedView {
-            view: self.view.clone(),
-            mapper: self.mapper.clone(),
-        }
-    }
+
+// impl<'doc, R: 'static + Renderable, S: 'static + Renderable> MappedView<'doc, R, S> {
 
 
 //     pub fn query(&self, el: &str) -> Element<'doc, MappedView<'doc, R>> {
@@ -283,201 +244,17 @@ impl<'doc, R: 'static + Renderable, S: 'static + Renderable> MappedView<'doc, R,
 //         where F: Fn(Event<R>) + 'doc
 //     {}
 
-}
-
-impl<'doc, R: 'static + Renderable> View<'doc, R> {
-    pub fn query(&self, el: &str) -> Element<'doc, Self, R> {
-        let binding = self.binding.borrow();
-        let node = binding.node.element_query(el).expect("querySelect returned no result");
-
-        Element {
-            node: Rc::new(node),
-            parent_view: self.clone(),
-            phantom: PhantomData,
-        }
-    }
-
-    // not public - for internal convenience only
-    fn clone(&self) -> View<'doc, R> {
-        View {
-            app: self.app.clone(),
-            el: self.el.clone(),
-            binding: self.binding.clone(),
-            phantom: PhantomData,
-        }
-    }
-
-    pub fn on<F>(&self, event: EventType, f: F)
-        where F: Fn(Event<Self, R>) + 'doc
-    {
-            let view = self.clone();
-            let binding_borrow = self.binding.borrow();
-            let ref current_node = binding_borrow.node;
-            current_node.on(event.name(), move |evt| {
-                println!("Event fired on {:?} for target {:?}",
-                         &view.binding.borrow().node,
-                         evt.target);
-                let target_node = evt.target.expect("Event did not have a target");
-                let event = Event {
-                    view: view.clone(),
-                    target: Element {
-                        node: Rc::new(target_node),
-                        parent_view: view.clone(),
-                        phantom: PhantomData,
-                    },
-                };
-                f(event);
-                view.app.process_render_queue();
-            });
-            println!("On handler registered");
-    }
-
-    pub fn bind<RR>(&self, el: &str, component: RR) -> View<'doc, RR>
-        where RR: 'static + Renderable
-    {
-
-        let node = self.binding.borrow().node.element_query(el).expect("querySelector found no results");
-        let props = lookup_props(&node, component.props());
-        node.html_set(&component.render(props));
-
-        let binding = self.app.insert_binding(el, component, node);
-
-        View {
-            app: self.app.clone(),
-            binding: binding,
-            el: el.to_owned(),
-            phantom: PhantomData,
-        }
-    }
-
-    // TODO: this function should quietly create a parent view for updating when the array changes,
-    // and instead return Vec<MappedView>
-    // Also, will need to provide blanket `impl Renderable for Vec<T> where T:Renderable`
-    // pub fn bind_each<RR, VR>(&self, el: &str, components: VR) -> Views<'doc, RR>
-    //     where RR: Renderable + 'static,
-    //           VR: IntoIterator<Item = RR>,
-    // {
-    //     let node = self.app.document.element_query(el).expect("querySelector found no results");
-    //     let rc_node =  Rc::new(node);
-
-    //     let mut views = Vec::new();
-    //     let mut html = String::new();
-    //     for component in components {
-    //         let props = lookup_props(&rc_node, component.props());
-    //         html.push_str(&component.render(props));
-
-    //         let binding = Binding::new(component, node);
-    //         let rc_binding = Rc::new(RefCell::new(binding));
-    //         {
-    //             let view_id = TypedKey::new::<RR>(el);
-    //             let mut components = self.app.components.borrow_mut();
-    //             components.insert(view_id, rc_component.clone());
-    //         }
-
-    //         let view = View {
-    //             app: self.app.clone(),
-    //             node: rc_node.clone(),
-    //             el: el.to_owned(),
-    //             component: rc_component.clone(),
-    //             phantom: PhantomData,
-    //         };
-    //         views.push(view);
-    //     }
-    //     rc_node.html_set(&html);
-    //     Views {
-    //         views: Rc::new(views),
-    //         // handlers: Rc::new(RefCell::new(Vec::new())),
-    //     }
-    // }
+// }
 
 
-    pub fn bind_map<S, F>(&self, el: &str, map_fn: F) -> MappedView<'doc, R, S>
-        where S: Renderable + 'static,
-              F: 'static + Fn(&R) -> &S,
-    {
-        let node = self.binding.borrow().node.element_query(el).expect("querySelector found no results");
-        let parent_component = self.data();
-        let component = map_fn(&parent_component);
-        let props = lookup_props(&node, component.props());
-        node.html_set(&component.render(props));
-
-        {
-            let mut binding = self.binding.borrow_mut();
-            binding.add(node, &map_fn);
-            // TODO: surface index to the MappedView, maybe?
-        }
-
-        MappedView {
-            view: View {
-                app: self.app.clone(),
-                binding: self.binding.clone(),
-                el: el.to_owned(),
-                phantom: PhantomData,
-            },
-            mapper: Rc::new(map_fn),
-        }
-    }
 
 
-    pub fn bind_map_each<S, F>(&self, el: &str, map_fn: F) -> Vec<MappedView<'doc, R, S>>
-        where S: Renderable + 'static,
-              F: 'static + Fn(&R) -> &Vec<S>,
-    {
-        let node = self.binding.borrow().node.element_query(el).expect("querySelector found no results");
-        let mut views = Vec::new();
-        let rc_map_fn = Rc::new(map_fn);
 
-        {
-            let parent_component = self.data();
-            let components = rc_map_fn(&parent_component);
-            let mut html = String::new();
-            for (i, component) in components.iter().enumerate() {
-                let props = lookup_props(&node, component.props());
-                html.push_str(&component.render(props));
-
-                let mapper = rc_map_fn.clone();
-                let view = MappedView {
-                    view: View {
-                        app: self.app.clone(),
-                        binding: self.binding.clone(),
-                        el: el.to_owned(),
-                        phantom: PhantomData,
-                    },
-                    // Convert the `Fn(&R) -> &[S]` into a `Fn(&R) -> S` for each S
-                    mapper: Rc::new(move |ref data| { &mapper(&data)[i] }),
-                };
-                views.push(view);
-            }
-            node.html_set(&html);
-        }
-
-
-        {
-            let mut binding = self.binding.borrow_mut();
-            binding.add(node, &*rc_map_fn);
-        }
-
-        views
-    }
-
-
-    pub fn data(&self) -> Ref<R> {
-        Ref::map(self.binding.borrow(), |r| r.component())
-    }
-
-    pub fn data_mut(&mut self) -> RefMut<R> {
-        // Before handing back mutable the mutable component,
-        // enqueue rendering of the original view that owns this data
-        let view_id = TypedKey::new::<R>(&self.el);
-        self.app.enqueue_render(view_id);
-        RefMut::map(self.binding.borrow_mut(), |r| r.component_mut())
-    }
-}
-
-
-pub struct Event<'doc, V, R> {
-    pub target: Element<'doc, V, R>,
-    pub view: V,
+pub struct Event<'doc, N> {
+    /// The node that triggered the event
+    pub target: Node<'doc>,
+    // The node the event was attached to (may include data binding)
+    pub binding: N,
 }
 
 // impl <'doc, R: Renderable + 'doc> Event<'doc, R> {
@@ -507,78 +284,88 @@ pub struct Event<'doc, V, R> {
 // }
 
 
-pub struct Element<'doc, V, R> {
-    node: Rc<HtmlNode<'doc>>,
-    parent_view: V,
-    phantom: PhantomData<R>,
-}
 
-impl<'doc, R, V> Element<'doc, V, R> {
-    pub fn set(&self, prop: &str, value: &str) {
-        self.node.prop_set_str(prop, value);
-    }
+// impl<'doc, V, R> Queryable for Element<'doc, V, R> {
+//     type Q = Element<'doc, V, R>;
 
-    pub fn get(&self, prop: &str) -> String {
-        self.node.prop_get_str(prop)
-    }
-}
+//     fn query(&self, el: &str) -> Self::Q {
+//         let binding = self.binding.borrow();
+//         let node = self.node.element_query(el).expect("querySelect returned no result");
 
-impl<'doc, R: 'static + Renderable> Element<'doc, View<'doc, R>, R> {
-    pub fn on<F>(&self, event: EventType, f: F)
-        where F: Fn(Event<View<'doc, R>, R>) + 'doc
-    {
-        {
-            let node = self.node.clone();
-            let parent_view = self.parent_view.clone();
+//         Element {
+//             node: Rc::new(node),
+//             parent_view: self.parent_viewclone(),
+//             phantom: PhantomData,
+//         }
+//     }
+// }
 
-            // we attach the event to self.node, not self.parent_view.node
-            self.node.on(event.name(), move |evt| {
-                println!("Event fired on {:?} for target {:?}",
-                         &node,
-                         evt.target);
-                let target_node = evt.target.expect("Event did not have a target");
-                let event = Event {
-                    view: parent_view.clone(),
-                    target: Element {
-                        node: Rc::new(target_node),
-                        parent_view: parent_view.clone(),
-                        phantom: PhantomData,
-                    },
-                };
-                f(event);
-                parent_view.app.process_render_queue();
-            });
-            println!("On handler registered");
-        }
-    }
-}
+// impl<'doc, R, V> Element<'doc, V, R> {
+//     pub fn set(&self, prop: &str, value: &str) {
+//         self.node.prop_set_str(prop, value);
+//     }
 
-impl<'doc, R: 'static + Renderable, S: 'static + Renderable> Element<'doc, MappedView<'doc, R, S>, R> {
-    pub fn on<F>(&self, event: EventType, f: F)
-        where F: Fn(Event<MappedView<'doc, R, S>, R>) + 'doc
-    {
-        {
-            let node = self.node.clone();
-            let parent_view = self.parent_view.clone();
+//     pub fn get(&self, prop: &str) -> String {
+//         self.node.prop_get_str(prop)
+//     }
+// }
 
-            // we attach the event to self.node, not self.parent_view.node
-            self.node.on(event.name(), move |evt| {
-                println!("Event fired on {:?} for target {:?}",
-                         &node,
-                         evt.target);
-                let target_node = evt.target.expect("Event did not have a target");
-                let event = Event {
-                    view: parent_view.clone(),
-                    target: Element {
-                        node: Rc::new(target_node),
-                        parent_view: parent_view.clone(),
-                        phantom: PhantomData,
-                    },
-                };
-                f(event);
-                parent_view.view.app.process_render_queue();
-            });
-            println!("On handler registered");
-        }
-    }
-}
+// impl<'doc, R: 'static + Renderable> NodeBind<'dNodBindRef, NodeBindRefEach<'doc, R>, R> {
+//     pub fn on<F>(&self, event: EventType, f: F)
+//         where F: Fn(Event<View<'doc, R>, R>) + 'doc
+//     {
+//         {
+//             let node = self.node.clone();
+//             let parent_view = self.parent_view.clone();
+
+//             // we attach the event to self.node, not self.parent_view.node
+//             self.node.on(event.name(), move |evt| {
+//                 println!("Event fired on {:?} for target {:?}",
+//                          &node,
+//                          evt.target);
+//                 let target_node = evt.target.expect("Event did not have a target");
+//                 let event = Event {
+//                     view: parent_view.clone(),
+//                     target: Element {
+//                         node: Rc::new(target_node),
+//                         parent_view: parent_view.clone(),
+//                         phantom: PhantomData,
+//                     },
+//                 };
+//                 f(event);
+//                 parent_view.app.process_render_queue();
+//             });
+//             println!("On handler registered");
+//         }
+//     }
+// }
+
+// impl<'doc, R: 'static + Renderable, S: 'static + Renderable> Element<'doc, MappedView<'doc, R, S>, R> {
+//     pub fn on<F>(&self, event: EventType, f: F)
+//         where F: Fn(Event<MappedView<'doc, R, S>, R>) + 'doc
+//     {
+//         {
+//             let node = self.node.clone();
+//             let parent_view = self.parent_view.clone();
+
+//             // we attach the event to self.node, not self.parent_view.node
+//             self.node.on(event.name(), move |evt| {
+//                 println!("Event fired on {:?} for target {:?}",
+//                          &node,
+//                          evt.target);
+//                 let target_node = evt.target.expect("Event did not have a target");
+//                 let event = Event {
+//                     view: parent_view.clone(),
+//                     target: Element {
+//                         node: Rc::new(target_node),
+//                         parent_view: parent_view.clone(),
+//                         phantom: PhantomData,
+//                     },
+//                 };
+//                 f(event);
+//                 parent_view.view.app.process_render_queue();
+//             });
+//             println!("On handler registered");
+//         }
+//     }
+// }
