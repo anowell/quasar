@@ -22,8 +22,7 @@ pub struct View<'doc, R> {
     node: Rc<HtmlNode<'doc>>,
     key: String,
     binding: Rc<RefCell<Binding<'doc>>>,
-    phantom: PhantomData<R>,
-    // TODO: generic marker SingleBind or Multibind to indicate if we can iterate
+    phantom: PhantomData<R>, // TODO: generic marker SingleBind or Multibind to indicate if we can iterate
 }
 
 
@@ -73,7 +72,6 @@ impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
             phantom: PhantomData,
         }
     }
-
 }
 
 impl<'doc> Queryable<'doc> for Node<'doc> {
@@ -107,7 +105,6 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
             phantom: PhantomData,
         }
     }
-
 }
 
 impl<'doc> Node<'doc> {
@@ -178,91 +175,89 @@ impl<'doc, R: 'static + Renderable> View<'doc, R> {
     pub fn on<F>(&self, event: EventType, f: F)
         where F: Fn(Event<Self>) + 'doc
     {
-            let app = self.app.clone();
-            let key = self.key.clone();
-            let binding = self.binding.clone();
-            let node = self.node.clone();
+        let app = self.app.clone();
+        let key = self.key.clone();
+        let binding = self.binding.clone();
+        let node = self.node.clone();
 
-            let event_handler = Rc::new(move |evt: webplatform::Event<'doc>, i| {
-                let node: View<'doc, R> = View {
+        let event_handler = Rc::new(move |evt: webplatform::Event<'doc>, i| {
+            let node: View<'doc, R> = View {
+                app: app.clone(),
+                key: key.clone(),
+                node: node.clone(),
+                binding: binding.clone(),
+                phantom: PhantomData,
+            };
+            println!("Event fired on {:?} for target {:?}",
+                     &node.binding.borrow().node,
+                     evt.target);
+            let target_node = evt.target.expect("Event did not have a target");
+            let event = Event {
+                binding: node,
+                target: Node {
+                    node: target_node,
                     app: app.clone(),
-                    key: key.clone(),
-                    node: node.clone(),
-                    binding: binding.clone(),
-                    phantom: PhantomData,
-                };
-                println!("Event fired on {:?} for target {:?}",
-                         &node.binding.borrow().node,
-                         evt.target);
-                let target_node = evt.target.expect("Event did not have a target");
-                let event = Event {
-                    binding: node,
-                    target: Node {
-                        node: target_node,
-                        app: app.clone(),
-                    },
-                    // FIXME: strange to attach a meaningless index here
-                    index: i,
-                };
-                f(event);
-                app.process_render_queue();
-            });
+                },
+                // FIXME: strange to attach a meaningless index here
+                index: i,
+            };
+            f(event);
+            app.process_render_queue();
+        });
 
-            // Attach event_handler to the DOM
-            let f = event_handler.clone();
+        // Attach event_handler to the DOM
+        let f = event_handler.clone();
 
-            self.node.on(event.name(), move |evt| f(evt, 0) );
+        self.node.on(event.name(), move |evt| f(evt, 0));
 
-            // Attach event_handler to binding for future rendering
-            self.binding.borrow_mut().add_handler(event.clone(), None, event_handler);
-            println!("On handler registered for {:?}", self.node);
+        // Attach event_handler to binding for future rendering
+        self.binding.borrow_mut().add_handler(event.clone(), None, event_handler);
+        println!("On handler registered for {:?}", self.node);
     }
 
     pub fn on_each<F>(&self, event: EventType, el: String, f: F)
         where F: Fn(Event<Self>) + 'doc
     {
-            let app = self.app.clone();
-            let key = self.key.clone();
-            let binding = self.binding.clone();
-            let node = self.node.clone();
+        let app = self.app.clone();
+        let key = self.key.clone();
+        let binding = self.binding.clone();
+        let node = self.node.clone();
 
-            let event_handler = Rc::new(move |evt: webplatform::Event<'doc>, i| {
-                let node: View<'doc, R> = View {
+        let event_handler = Rc::new(move |evt: webplatform::Event<'doc>, i| {
+            let node: View<'doc, R> = View {
+                app: app.clone(),
+                key: key.clone(),
+                node: node.clone(),
+                binding: binding.clone(),
+                phantom: PhantomData,
+            };
+            println!("Event fired on {:?} for target {:?}",
+                     &node.binding.borrow().node,
+                     evt.target);
+            let target_node = evt.target.expect("Event did not have a target");
+            let event = Event {
+                binding: node,
+                target: Node {
+                    node: target_node,
                     app: app.clone(),
-                    key: key.clone(),
-                    node: node.clone(),
-                    binding: binding.clone(),
-                    phantom: PhantomData,
-                };
-                println!("Event fired on {:?} for target {:?}",
-                         &node.binding.borrow().node,
-                         evt.target);
-                let target_node = evt.target.expect("Event did not have a target");
-                let event = Event {
-                    binding: node,
-                    target: Node {
-                        node: target_node,
-                        app: app.clone(),
-                    },
-                    index: i,
-                };
-                f(event);
-                app.process_render_queue();
-            });
+                },
+                index: i,
+            };
+            f(event);
+            app.process_render_queue();
+        });
 
-            // Attach event_handler to the DOM
-            let nodes = self.node.element_query_all(&el);
-            for (i, node) in nodes.iter().enumerate() {
-                let f = event_handler.clone();
-                node.on(event.name(), move |evt| f(evt, i) );
-            }
+        // Attach event_handler to the DOM
+        let nodes = self.node.element_query_all(&el);
+        for (i, node) in nodes.iter().enumerate() {
+            let f = event_handler.clone();
+            node.on(event.name(), move |evt| f(evt, i));
+        }
 
-            // Attach event_handler to binding for future rendering
-            self.binding.borrow_mut().add_handler(event.clone(), Some(el), event_handler);
-            println!("On handlers registered for nodes: {:?}", &nodes);
+        // Attach event_handler to binding for future rendering
+        self.binding.borrow_mut().add_handler(event.clone(), Some(el), event_handler);
+        println!("On handlers registered for nodes: {:?}", &nodes);
     }
-
-
 }
 
 // **********************************
@@ -291,7 +286,7 @@ impl<'doc, R: 'static + Renderable> HasBind<'doc> for View<'doc, R> {
 pub fn init<'a, 'doc: 'a>() -> QuasarApp<'a> {
     QuasarApp {
         document: Rc::new(webplatform::init()),
-        app: Rc::new(AppState::new())
+        app: Rc::new(AppState::new()),
     }
 }
 

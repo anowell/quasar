@@ -12,7 +12,7 @@ mod components;
 mod state;
 mod nodes;
 
-pub use events::{EventType};
+pub use events::EventType;
 pub use components::{Component, Properties, Renderable};
 pub use nodes::{init, QuasarApp, Node, View, Queryable, HasBind};
 pub use rustc_serialize::json::Json;
@@ -81,7 +81,6 @@ impl<'doc> QuasarApp<'doc> {
     pub fn spin(self) {
         webplatform::spin();
     }
-
 }
 
 
@@ -117,12 +116,12 @@ impl<'doc> AppContext<'doc> {
 }
 
 /// A collection of `View`s returned from a query selector
-//pub struct Views<'doc, R> {
-    // views: Rc<Vec<View<'doc, R>>>,
-    // Views may have multiple handlers, hence Vec
-    // We want interior mutability, hence RefCell
-    // A handler may map to multiple views
-    // handlers: Rc<RefCell<Vec<Box<Fn(Event<R>) + 'doc>>>>,
+// pub struct Views<'doc, R> {
+// views: Rc<Vec<View<'doc, R>>>,
+// Views may have multiple handlers, hence Vec
+// We want interior mutability, hence RefCell
+// A handler may map to multiple views
+// handlers: Rc<RefCell<Vec<Box<Fn(Event<R>) + 'doc>>>>,
 // }
 
 // impl <'a, 'doc, R> IntoIterator for &'a Views<'doc, R> {
@@ -149,75 +148,75 @@ impl<'doc> AppContext<'doc> {
 // }
 
 // impl<'doc, R: Renderable + 'static> Views<'doc, R> {
-    // pub fn on<F>(&self, event: EventType, f: F)
-    //     where F: Fn(Event<R>) + 'doc
-    // {
-    //     // Insert the handler into self and return it's index
-    //     let offset = {
-    //         let mut handlers = self.handlers.borrow_mut();
-    //         handlers.push(Box::new(f));
-    //         handlers.len() - 1
-    //     };
+// pub fn on<F>(&self, event: EventType, f: F)
+//     where F: Fn(Event<R>) + 'doc
+// {
+//     // Insert the handler into self and return it's index
+//     let offset = {
+//         let mut handlers = self.handlers.borrow_mut();
+//         handlers.push(Box::new(f));
+//         handlers.len() - 1
+//     };
 
 
-    //     // For each view, setup a unique 'on' handler
-    //     for v in self.views.iter() {
-    //         println!("attaching handler to view: {:?}", &v.node);
-    //         let handlers = self.handlers.clone();
-    //         let app = v.app.clone();
-    //         let el = v.el.clone();
-    //         let node = v.node.clone();
-    //         let component = v.component.clone();
-    //         let views = self.views.clone();
+//     // For each view, setup a unique 'on' handler
+//     for v in self.views.iter() {
+//         println!("attaching handler to view: {:?}", &v.node);
+//         let handlers = self.handlers.clone();
+//         let app = v.app.clone();
+//         let el = v.el.clone();
+//         let node = v.node.clone();
+//         let component = v.component.clone();
+//         let views = self.views.clone();
 
-    //         v.node.on(event.name(), move |evt| {
-    //             let handlers = handlers.clone();
+//         v.node.on(event.name(), move |evt| {
+//             let handlers = handlers.clone();
 
-    //             let view = View {
-    //                 app: app.clone(),
-    //                 el: el.clone(),
-    //                 node: node.clone(),
-    //                 component: component.clone(),
-    //                 phantom: PhantomData,
-    //             };
+//             let view = View {
+//                 app: app.clone(),
+//                 el: el.clone(),
+//                 node: node.clone(),
+//                 component: component.clone(),
+//                 phantom: PhantomData,
+//             };
 
-    //             // Process the event with the target and originating view
-    //             println!("Event fired on {:?} for target {:?}",
-    //                      &view.node,
-    //                      evt.target);
-    //             {
-    //                 let event = Event {
-    //                     app: AppContext {
-    //                         app: app.clone(),
-    //                         view_id: TypedKey::new::<R>(&el),
-    //                         node: node.clone(),
-    //                     },
-    //                     target: Element { node: evt.target.expect("Event did not have a target"), parent_view: Rc::new(view) },
-    //                     view: view,
-    //                 };
-    //                 let inner_handlers = handlers.borrow();
-    //                 inner_handlers[offset](event);
-    //             }
+//             // Process the event with the target and originating view
+//             println!("Event fired on {:?} for target {:?}",
+//                      &view.node,
+//                      evt.target);
+//             {
+//                 let event = Event {
+//                     app: AppContext {
+//                         app: app.clone(),
+//                         view_id: TypedKey::new::<R>(&el),
+//                         node: node.clone(),
+//                     },
+//                     target: Element { node: evt.target.expect("Event did not have a target"), parent_view: Rc::new(view) },
+//                     view: view,
+//                 };
+//                 let inner_handlers = handlers.borrow();
+//                 inner_handlers[offset](event);
+//             }
 
-    //             // Re-render all the views for this component instance
-    //             // TODO: remove this section
-    //             // instead, bind should add all these views as observers of this component data
-    //             // and let `data_mut` schedule re-render which could be handled here or in tick loop
-    //             for v in views.iter() {
-    //                 let node = v.node.clone();
-    //                 let component = v.component.clone();
-    //                 let rendered = {
-    //                     let component = component.borrow();
-    //                     let props = lookup_props(&node, component.props());
-    //                     component.render(props)
-    //                 };
-    //                 node.html_set(&rendered);
-    //             }
-    //             app.process_render_queue()
-    //         });
-    //     }
-    //     println!("{} On handlers registered", self.views.len());
-    // }
+//             // Re-render all the views for this component instance
+//             // TODO: remove this section
+//             // instead, bind should add all these views as observers of this component data
+//             // and let `data_mut` schedule re-render which could be handled here or in tick loop
+//             for v in views.iter() {
+//                 let node = v.node.clone();
+//                 let component = v.component.clone();
+//                 let rendered = {
+//                     let component = component.borrow();
+//                     let props = lookup_props(&node, component.props());
+//                     component.render(props)
+//                 };
+//                 node.html_set(&rendered);
+//             }
+//             app.process_render_queue()
+//         });
+//     }
+//     println!("{} On handlers registered", self.views.len());
+// }
 // }
 
 

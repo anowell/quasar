@@ -17,12 +17,10 @@ pub struct Binding<'doc> {
     pub node: Rc<HtmlNode<'doc>>,
     component: Box<Renderable>,
     // FIXME: Store selector and handlers, and blindly reapply handlers after rerender until we can patch DOM more conservatively
-    handlers: Vec<Handler<'doc>>,
-
-    // FIXME: These shared_binds are fundamentally broken. Node rerender will crussh nodes.
-    // option 1: virutal dom, where the shared_bind nodes are rendered to virt dom before parent is rendered to DOM
-    // option 2: store el, and just rerender after parent blows away children - still breaks event handlers
-    //shared_binds: Vec<(HtmlNode<'doc>, *const Renderable)>,
+    handlers: Vec<Handler<'doc>>, /* FIXME: These shared_binds are fundamentally broken. Node rerender will crussh nodes.
+                                   * option 1: virutal dom, where the shared_bind nodes are rendered to virt dom before parent is rendered to DOM
+                                   * option 2: store el, and just rerender after parent blows away children - still breaks event handlers
+                                   * shared_binds: Vec<(HtmlNode<'doc>, *const Renderable)>, */
 }
 
 impl<'doc> Binding<'doc> {
@@ -44,7 +42,10 @@ impl<'doc> Binding<'doc> {
     //     self.shared_binds.push((node, ptr));
     // }
 
-    pub fn add_handler(&mut self, event_type: EventType, el: Option<String>, event_handler: Rc<Fn(webplatform::Event<'doc>, usize) + 'doc>) {
+    pub fn add_handler(&mut self,
+                       event_type: EventType,
+                       el: Option<String>,
+                       event_handler: Rc<Fn(webplatform::Event<'doc>, usize) + 'doc>) {
         let handler = Handler {
             el: el,
             event_type: event_type,
@@ -54,11 +55,15 @@ impl<'doc> Binding<'doc> {
     }
 
 
-    pub fn component<R>(&self) -> &R where R: Renderable {
+    pub fn component<R>(&self) -> &R
+        where R: Renderable
+    {
         self.component.downcast_ref().unwrap()
     }
 
-    pub fn component_mut<R>(&mut self) -> &mut R where R: Renderable {
+    pub fn component_mut<R>(&mut self) -> &mut R
+        where R: Renderable
+    {
         self.component.downcast_mut().unwrap()
     }
 }
@@ -130,7 +135,11 @@ impl<'doc> AppState<'doc> {
         }
     }
 
-    pub fn insert_binding<R: 'static + Renderable>(&self, key: &str, component: R, node: Rc<HtmlNode<'doc>>) -> Rc<RefCell<Binding<'doc>>> {
+    pub fn insert_binding<R: 'static + Renderable>(&self,
+                                                   key: &str,
+                                                   component: R,
+                                                   node: Rc<HtmlNode<'doc>>)
+                                                   -> Rc<RefCell<Binding<'doc>>> {
         let binding = Binding::new(component, node);
         let rc_binding = Rc::new(RefCell::new(binding));
         {
@@ -175,7 +184,7 @@ impl<'doc> AppState<'doc> {
                     let nodes = binding.node.element_query_all(&el);
                     for (i, node) in nodes.iter().enumerate() {
                         let f = handler.event_handler.clone();
-                        node.on(handler.event_type.name(), move |event| { f(event, i) });
+                        node.on(handler.event_type.name(), move |event| f(event, i));
                     }
                     println!("On handlers REregistered for nodes: {:?}", &nodes);
                 }
@@ -183,7 +192,6 @@ impl<'doc> AppState<'doc> {
         }
         queue.clear();
     }
-
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]

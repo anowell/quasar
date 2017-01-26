@@ -25,7 +25,9 @@ pub trait Renderable: Downcast {
 
 impl_downcast!(Renderable);
 
-impl<R> Renderable for Vec<R> where R: Renderable {
+impl<R> Renderable for Vec<R>
+    where R: Renderable
+{
     // FIXME: This needs to disappear
     fn props(&self) -> &[&'static str] {
         self[0].props()
