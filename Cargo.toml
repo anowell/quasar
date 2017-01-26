@@ -1,7 +1,9 @@
 [package]
 name = "quasar"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Anthony Nowell <anowell@gmail.com>"]
+description = "An experimental rust-to-{wasm,asmjs} frontend framework."
+repository = "https://github.com/anowell/quasar"
 
 [dependencies]
 rustc-serialize = "0.3.18"
