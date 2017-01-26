@@ -17,10 +17,7 @@ pub struct Binding<'doc> {
     pub node: Rc<HtmlNode<'doc>>,
     component: Box<Renderable>,
     // FIXME: Store selector and handlers, and blindly reapply handlers after rerender until we can patch DOM more conservatively
-    handlers: Vec<Handler<'doc>>, /* FIXME: These shared_binds are fundamentally broken. Node rerender will crussh nodes.
-                                   * option 1: virutal dom, where the shared_bind nodes are rendered to virt dom before parent is rendered to DOM
-                                   * option 2: store el, and just rerender after parent blows away children - still breaks event handlers
-                                   * shared_binds: Vec<(HtmlNode<'doc>, *const Renderable)>, */
+    handlers: Vec<Handler<'doc>>,
 }
 
 impl<'doc> Binding<'doc> {
@@ -31,16 +28,6 @@ impl<'doc> Binding<'doc> {
             handlers: vec![],
         }
     }
-
-    // pub fn add_bind<R, S, F>(&mut self, node: HtmlNode<'doc>, map_fn: &F)
-    //     where F: 'static + Fn(&R) -> &S,
-    //           R: Renderable + 'static,
-    //           S: Renderable + 'static,
-    // {
-    //     let component: &R = self.component.downcast_ref().unwrap();
-    //     let ptr: *const Renderable = map_fn(&component);
-    //     self.shared_binds.push((node, ptr));
-    // }
 
     pub fn add_handler(&mut self,
                        event_type: EventType,

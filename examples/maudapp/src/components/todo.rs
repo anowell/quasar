@@ -51,35 +51,3 @@ pub fn init(app: &QuasarApp)  {
         item_list.items[evt.index].complete = state;
     });
 }
-
-
-
-// pub fn init(app: &QuasarApp) -> View {
-//     let component = TodoList {
-//         items: vec![
-//             TodoItem { label: "Example Task".to_string(), complete: false },
-//         ]
-//     };
-
-//     let view = app.bind("#todo-list", component);
-
-//     let item_list_view = view.bind_ref_each("#todo-ul", |data| { &data.items });
-
-
-//     view.query("button")
-//         .on(EventType::Click, |mut evt| {
-//             let message = "foo".to_string(); //evt.binding.query("#message").get("value");
-//             let item = TodoItem { label: message, complete: false };
-//             evt.binding.data_mut().items.push(item);
-//         });
-
-//     // TOOD: shorthand for operation on collection of children views
-//     for item in item_list_view.iter() {
-//         item.query(".todo-item input")
-//             .on(EventType::Click, |mut evt| {
-//                 let state = evt.target.get("value") == "checked";
-//                 evt.binding.data_mut().complete = state;
-//             });
-//     }
-
-// }
