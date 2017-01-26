@@ -14,16 +14,12 @@ mod nodes;
 
 pub use events::{EventType};
 pub use components::{Component, Properties, Renderable};
-pub use nodes::{init, QuasarApp, Node, View, RefView, Queryable, HasBind};
+pub use nodes::{init, QuasarApp, Node, View, Queryable, HasBind};
 pub use rustc_serialize::json::Json;
 
 use nodes::lookup_props;
-use state::{AppState, Binding, DataRef, DataMutRef, TypedKey};
-use std::collections::HashMap;
-use std::iter::FromIterator;
-use std::cell::{RefCell, Ref, RefMut};
+use state::{AppState, DataRef, DataMutRef, TypedKey};
 use std::rc::Rc;
-use std::marker::PhantomData;
 use webplatform::HtmlNode;
 
 #[cfg(feature = "mustache")]
@@ -255,6 +251,8 @@ pub struct Event<'doc, N> {
     pub target: Node<'doc>,
     // The node the event was attached to (may include data binding)
     pub binding: N,
+    // The target's index offset when event was attached multiple times for a selector
+    pub index: usize,
 }
 
 // impl <'doc, R: Renderable + 'doc> Event<'doc, R> {

@@ -34,11 +34,14 @@ pub fn init(app: &QuasarApp) {
         "##).expect("failed to compile cat_item template")
     };
 
-    app.bind(".cat-list", cat_list);
-    // TODO: allow chaining binds for nested
-    // app.bind_all(".cat-list Cat", cat_item);
-        // .on(EventType::Click, |evt| {
-        //     let catname = evt.target.get("catname");
-        //     println!("cat {} is in {:?}", &catname, &evt.target);
-        // });
+    let view = app.bind(".cat-list", cat_list);
+
+    // TODO: not sure how I want to implement nested components
+    //   probably will require much more DOM magic
+    // let cat_views = view.bind_each("Cat", |data| data.cats);
+
+    // app.on_each(EventType::Click, "Cat".to_string(), |evt| {
+    //     let catname = evt.target.get("catname");
+    //     println!("MEOW {}", &catname);
+    // });
 }

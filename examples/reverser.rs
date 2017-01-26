@@ -2,7 +2,7 @@ extern crate quasar;
 extern crate mustache;
 extern crate rustc_serialize;
 
-use quasar::{compile_str, Component, EventType};
+use quasar::{compile_str, Component, EventType, Queryable, HasBind};
 
 #[derive(RustcEncodable)]
 struct ReverseData {
@@ -29,7 +29,7 @@ fn main() {
     let view = app.bind("Reverser", my_widget);
     view.on(EventType::Click, |mut evt| {
         println!("on click called");
-        let mut data = evt.view.data_mut();
+        let mut data = evt.binding.data_mut();
         data.message = data.message.chars().rev().collect::<String>();
     });
 

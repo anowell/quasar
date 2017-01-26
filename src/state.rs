@@ -3,34 +3,56 @@ use std::any::{Any, TypeId};
 use std::cell::{RefCell, Ref, RefMut};
 use std::rc::Rc;
 use std::ops::{Deref, DerefMut};
-use webplatform::{HtmlNode};
+use webplatform::{self, HtmlNode};
 
-use {Renderable, lookup_props};
+use {EventType, Renderable, lookup_props};
+
+pub struct Handler<'doc> {
+    el: Option<String>,
+    event_type: EventType,
+    event_handler: Rc<Fn(webplatform::Event<'doc>, usize) + 'doc>,
+}
 
 pub struct Binding<'doc> {
+    pub node: Rc<HtmlNode<'doc>>,
     component: Box<Renderable>,
-    pub node: HtmlNode<'doc>,
-    shared_binds: Vec<(HtmlNode<'doc>, *const Renderable)>,
+    // FIXME: Store selector and handlers, and blindly reapply handlers after rerender until we can patch DOM more conservatively
+    handlers: Vec<Handler<'doc>>,
+
+    // FIXME: These shared_binds are fundamentally broken. Node rerender will crussh nodes.
+    // option 1: virutal dom, where the shared_bind nodes are rendered to virt dom before parent is rendered to DOM
+    // option 2: store el, and just rerender after parent blows away children - still breaks event handlers
+    //shared_binds: Vec<(HtmlNode<'doc>, *const Renderable)>,
 }
 
 impl<'doc> Binding<'doc> {
-    pub fn new<R: 'static + Renderable>(component: R, node: HtmlNode<'doc>) -> Binding<'doc> {
+    pub fn new<R: 'static + Renderable>(component: R, node: Rc<HtmlNode<'doc>>) -> Binding<'doc> {
         Binding {
             component: Box::new(component),
             node: node,
-            shared_binds: vec![],
+            handlers: vec![],
         }
     }
 
-    pub fn add<R, S, F>(&mut self, node: HtmlNode<'doc>, map_fn: &F)
-        where F: 'static + Fn(&R) -> &S,
-              R: Renderable + 'static,
-              S: Renderable + 'static,
-    {
-        let component: &R = self.component.downcast_ref().unwrap();
-        let ptr: *const Renderable = map_fn(&component);
-        self.shared_binds.push((node, ptr));
+    // pub fn add_bind<R, S, F>(&mut self, node: HtmlNode<'doc>, map_fn: &F)
+    //     where F: 'static + Fn(&R) -> &S,
+    //           R: Renderable + 'static,
+    //           S: Renderable + 'static,
+    // {
+    //     let component: &R = self.component.downcast_ref().unwrap();
+    //     let ptr: *const Renderable = map_fn(&component);
+    //     self.shared_binds.push((node, ptr));
+    // }
+
+    pub fn add_handler(&mut self, event_type: EventType, el: Option<String>, event_handler: Rc<Fn(webplatform::Event<'doc>, usize) + 'doc>) {
+        let handler = Handler {
+            el: el,
+            event_type: event_type,
+            event_handler: event_handler,
+        };
+        self.handlers.push(handler);
     }
+
 
     pub fn component<R>(&self) -> &R where R: Renderable {
         self.component.downcast_ref().unwrap()
@@ -75,7 +97,7 @@ impl<'doc> AppState<'doc> {
     pub fn data<T: 'static>(&self, key: &str) -> DataRef<T> {
         let data_id = TypedKey::new::<T>(key);
         let owned_ref = Ref::map(self.state.borrow(), |state| {
-            let entry = state.get(&data_id).unwrap();
+            let entry = state.get(&data_id).expect("Failed to get state");
             entry.downcast_ref().unwrap()
         });
         DataRef {
@@ -99,7 +121,7 @@ impl<'doc> AppState<'doc> {
 
 
         let mut owned_ref = RefMut::map(self.state.borrow_mut(), |mut state| {
-            let mut entry = state.get_mut(&data_id).unwrap();
+            let mut entry = state.get_mut(&data_id).expect("Failed to get mutable state");
             entry.downcast_mut::<T>().unwrap()
         });
         DataMutRef {
@@ -108,11 +130,11 @@ impl<'doc> AppState<'doc> {
         }
     }
 
-    pub fn insert_binding<R: 'static + Renderable>(&self, el: &str, component: R, node: HtmlNode<'doc>) -> Rc<RefCell<Binding<'doc>>> {
+    pub fn insert_binding<R: 'static + Renderable>(&self, key: &str, component: R, node: Rc<HtmlNode<'doc>>) -> Rc<RefCell<Binding<'doc>>> {
         let binding = Binding::new(component, node);
         let rc_binding = Rc::new(RefCell::new(binding));
         {
-            let view_id = TypedKey::new::<R>(el);
+            let view_id = TypedKey::new::<R>(key);
             let mut bindings = self.bindings.borrow_mut();
             bindings.insert(view_id, rc_binding.clone());
         }
@@ -132,9 +154,10 @@ impl<'doc> AppState<'doc> {
 
     pub fn process_render_queue(&self) {
         let mut queue = self.render_queue.borrow_mut();
+        println!("Processing render queue (len={})", queue.len());
         let bindings = self.bindings.borrow();
         for view_id in queue.iter() {
-            let binding = bindings.get(&view_id).unwrap();
+            let binding = bindings.get(&view_id).expect("failed to get binding for view");
             let binding = binding.borrow();
             let ref component = binding.component;
 
@@ -143,15 +166,19 @@ impl<'doc> AppState<'doc> {
             let props = lookup_props(&binding.node, component.props());
             binding.node.html_set(&component.render(props));
 
-            // Rerender any shared binds
-            for bind in &binding.shared_binds {
-                // FIXME: this node doesn't exist because it was blown away by the above html_set call
-                let (ref node, ptr) = *bind;
-                let component = unsafe { &*ptr };
-                println!("Rerender shared_bind node {:?} (BROKEN)", &node);
-                let props = lookup_props(&node, component.props());
-                let html = component.render(props);
-                node.html_set(&html);
+            // Attach any event handlers.
+            // FIXME: This isn't very well done, since we should only need to attach
+            // them for nodes that were added. But since we blew away the entire DOM,
+            // we'll just reattach them all.
+            for handler in &binding.handlers {
+                if let Some(ref el) = handler.el {
+                    let nodes = binding.node.element_query_all(&el);
+                    for (i, node) in nodes.iter().enumerate() {
+                        let f = handler.event_handler.clone();
+                        node.on(handler.event_type.name(), move |event| { f(event, i) });
+                    }
+                    println!("On handlers REregistered for nodes: {:?}", &nodes);
+                }
             }
         }
         queue.clear();
@@ -159,7 +186,7 @@ impl<'doc> AppState<'doc> {
 
 }
 
-#[derive(Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct TypedKey {
     tid: TypeId,
     key: String,

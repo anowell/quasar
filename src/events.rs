@@ -13,6 +13,7 @@ pub enum EventType {
     Submit,
     Blur,
     Focus,
+    Change,
 }
 
 impl EventType {
@@ -30,6 +31,7 @@ impl EventType {
             EventType::Submit => "submit",
             EventType::Blur => "blur",
             EventType::Focus => "focus",
+            EventType::Change => "change",
         }
     }
 }
