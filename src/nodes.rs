@@ -29,7 +29,7 @@ pub struct View<'doc, R> {
 pub trait Queryable<'doc> {
     type Q: Queryable<'doc>;
 
-    fn query(&self, el: &str) -> Self::Q;
+    fn query(&self, el: &str) -> Option<Self::Q>;
     // fn query_all(&self, el: &str) -> Vec<Self>
 
     fn bind<R>(&self, el: &str, component: R) -> View<'doc, R> where R: 'static + Renderable;
@@ -45,13 +45,13 @@ pub trait HasBind<'doc> {
 
 impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
     type Q = Node<'doc>;
-    fn query(&self, el: &str) -> Node<'doc> {
-        let node = self.document.element_query(el).expect("querySelect returned no result");
-
-        Node {
-            app: self.app.clone(),
-            node: node,
-        }
+    fn query(&self, el: &str) -> Option<Node<'doc>> {
+        self.document.element_query(el).map(|node| {
+            Node {
+                app: self.app.clone(),
+                node: node,
+            }
+        })
     }
 
     fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> View<'doc, R> {
@@ -77,13 +77,13 @@ impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
 impl<'doc> Queryable<'doc> for Node<'doc> {
     type Q = Self;
 
-    fn query(&self, el: &str) -> Self::Q {
-        let node = self.node.element_query(el).expect("querySelect returned no result");
-
-        Node {
-            app: self.app.clone(),
-            node: node,
-        }
+    fn query(&self, el: &str) -> Option<Self::Q> {
+        self.node.element_query(el).map(|node| {
+            Node {
+                app: self.app.clone(),
+                node: node,
+            }
+        })
     }
 
     fn bind<RR>(&self, el: &str, component: RR) -> View<'doc, RR>
@@ -138,16 +138,16 @@ impl<'doc, R: 'static + Renderable> View<'doc, R> {
 impl<'doc, R: 'static + Renderable> Queryable<'doc> for View<'doc, R> {
     type Q = Self;
 
-    fn query(&self, el: &str) -> Self::Q {
-        let node = self.node.element_query(el).expect("querySelect returned no result");
-
-        View {
-            app: self.app.clone(),
-            node: Rc::new(node),
-            key: self.key.clone(),
-            binding: self.binding.clone(),
-            phantom: PhantomData,
-        }
+    fn query(&self, el: &str) -> Option<Self::Q> {
+        self.node.element_query(el).map(|node| {
+            View {
+                app: self.app.clone(),
+                node: Rc::new(node),
+                key: self.key.clone(),
+                binding: self.binding.clone(),
+                phantom: PhantomData,
+            }
+        })
     }
 
     fn bind<RR>(&self, el: &str, component: RR) -> View<'doc, RR>

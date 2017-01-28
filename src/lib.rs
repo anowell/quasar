@@ -80,7 +80,7 @@ impl<'doc> AppContext<'doc> {
     ///
     /// This will flag the view in scope as an observer of this data bucket,
     ///   and any modifications to data at this key will cause this view to be re-rendered.
-    pub fn data<T: 'static>(&self, key: &str) -> DataRef<T> {
+    pub fn data<T: 'static>(&self, key: &str) -> Option<DataRef<T>> {
         let type_id = TypedKey::new::<T>(&key);
         self.app.add_observer(type_id, self.view_id.clone());
         self.app.data(key)
@@ -92,7 +92,7 @@ impl<'doc> AppContext<'doc> {
     ///   and any modifications to data at this key will cause this view to be re-rendered.
     /// It will also cause all observers of this view to be re-rendered after processing
     ///   of the current event is finished.
-    pub fn data_mut<T: 'static>(&mut self, key: &str) -> DataMutRef<T> {
+    pub fn data_mut<T: 'static>(&mut self, key: &str) -> Option<DataMutRef<T>> {
         let type_id = TypedKey::new::<T>(&key);
         self.app.add_observer(type_id, self.view_id.clone());
         self.app.data_mut(key)

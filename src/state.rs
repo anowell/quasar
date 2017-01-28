@@ -86,21 +86,30 @@ impl<'doc> AppState<'doc> {
         }
     }
 
-    pub fn data<T: 'static>(&self, key: &str) -> DataRef<T> {
+    pub fn data<T: 'static>(&self, key: &str) -> Option<DataRef<T>> {
         let data_id = TypedKey::new::<T>(key);
-        let owned_ref = Ref::map(self.state.borrow(), |state| {
-            let entry = state.get(&data_id).expect("Failed to get state");
+        let borrowed_state = self.state.borrow();
+        if !borrowed_state.contains_key(&data_id) {
+            return None;
+        }
+        let owned_ref = Ref::map(borrowed_state, |state| {
+            let entry = state.get(&data_id).unwrap();
             entry.downcast_ref().unwrap()
         });
-        DataRef {
+        Some(DataRef {
             reference: &*owned_ref,
             _owner: owned_ref,
-        }
+        })
     }
 
-    pub fn data_mut<T: 'static>(&self, key: &str) -> DataMutRef<T> {
+    pub fn data_mut<T: 'static>(&self, key: &str) -> Option<DataMutRef<T>> {
         // Look up observers, and enqueue them for re-render
         let data_id = TypedKey::new::<T>(key);
+        let borrowed_state = self.state.borrow_mut();
+        if !borrowed_state.contains_key(&data_id) {
+            return None;
+        }
+
         {
             let observers = self.observers.borrow();
             if let Some(partition_observers) = observers.get(&data_id) {
@@ -112,14 +121,14 @@ impl<'doc> AppState<'doc> {
         }
 
 
-        let mut owned_ref = RefMut::map(self.state.borrow_mut(), |mut state| {
+        let mut owned_ref = RefMut::map(borrowed_state, |mut state| {
             let mut entry = state.get_mut(&data_id).expect("Failed to get mutable state");
             entry.downcast_mut::<T>().unwrap()
         });
-        DataMutRef {
+        Some(DataMutRef {
             reference: &mut *owned_ref,
             _owner: owned_ref,
-        }
+        })
     }
 
     pub fn insert_binding<R: 'static + Renderable>(&self,
