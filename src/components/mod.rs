@@ -25,22 +25,18 @@ pub trait Renderable: Downcast {
 
 impl_downcast!(Renderable);
 
-impl<R> Renderable for Vec<R>
-    where R: Renderable
+impl<T> Renderable for T
+    where T: ::std::fmt::Display + 'static
 {
-    // FIXME: This needs to disappear
     fn props(&self) -> &[&'static str] {
-        self[0].props()
+        &[]
     }
 
-    fn render(&self, props: Properties) -> String {
-        let mut html = Vec::new();
-        for r in self {
-            html.push(r.render(props.clone()));
-        }
-        html.concat()
+    fn render<'doc>(&self, props: Properties) -> String {
+        self.to_string()
     }
 }
+
 
 /// Component for templating
 #[derive(Debug)]
