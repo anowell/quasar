@@ -20,7 +20,7 @@ pub fn init(app: &QuasarApp) {
     };
 
     app.bind("#hello", component)
-        .on_each(EventType::Input, "#name-field".to_string(), |mut evt| {
+        .on_each(EventType::Input, "#name-field", |mut evt| {
             evt.binding.data_mut().name = evt.target.get("value");
         });
 }

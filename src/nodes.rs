@@ -215,7 +215,7 @@ impl<'doc, R: 'static + Renderable> View<'doc, R> {
         println!("On handler registered for {:?}", self.node);
     }
 
-    pub fn on_each<F>(&self, event: EventType, el: String, f: F)
+    pub fn on_each<F>(&self, event: EventType, el: &str, f: F)
         where F: Fn(Event<Self>) + 'doc
     {
         let app = self.app.clone();
@@ -256,7 +256,7 @@ impl<'doc, R: 'static + Renderable> View<'doc, R> {
         println!("On handlers registered for nodes: {:?}", &nodes);
 
         // Attach event_handler to binding for future rendering
-        self.binding.borrow_mut().add_handler(event.clone(), Some(el), event_handler, nodes.into_iter().map(Rc::new).collect());
+        self.binding.borrow_mut().add_handler(event.clone(), Some(el.to_owned()), event_handler, nodes.into_iter().map(Rc::new).collect());
     }
 }
 

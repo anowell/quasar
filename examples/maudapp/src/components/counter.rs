@@ -19,7 +19,7 @@ pub fn init(app: &QuasarApp) {
     };
 
     app.bind("#counter", component)
-        .on_each(EventType::Click, "button".to_string(), |mut evt| {
+        .on_each(EventType::Click, "button", |mut evt| {
             evt.binding.data_mut().count += 1;
         });
 }
