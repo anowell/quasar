@@ -58,7 +58,7 @@ impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
         let node = self.document.element_query(el).expect("querySelector found no results");
 
         let props = lookup_props(&node, component.props());
-        node.html_set(&component.render(props));
+        node.html_patch(&component.render(props));
 
         let rc_node = Rc::new(node);
         let key = "TODO: generate a unique key";
@@ -91,7 +91,7 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
     {
         let node = self.node.element_query(el).expect("querySelector found no results");
         let props = lookup_props(&node, component.props());
-        node.html_set(&component.render(props));
+        node.html_patch(&component.render(props));
 
         let rc_node = Rc::new(node);
         let key = "TODO: use some sort of unique key";
@@ -155,7 +155,7 @@ impl<'doc, R: 'static + Renderable> Queryable<'doc> for View<'doc, R> {
     {
         let node = self.node.element_query(el).expect("querySelect returned no result");
         let props = lookup_props(&node, component.props());
-        node.html_set(&component.render(props));
+        node.html_patch(&component.render(props));
 
         let rc_node = Rc::new(node);
         let key = "TODO: pick some unique key";
@@ -211,7 +211,7 @@ impl<'doc, R: 'static + Renderable> View<'doc, R> {
         self.node.on(event.name(), move |evt| f(evt, 0));
 
         // Attach event_handler to binding for future rendering
-        self.binding.borrow_mut().add_handler(event.clone(), None, event_handler);
+        self.binding.borrow_mut().add_handler(event.clone(), None, event_handler, vec![self.node.clone()]);
         println!("On handler registered for {:?}", self.node);
     }
 
@@ -253,10 +253,10 @@ impl<'doc, R: 'static + Renderable> View<'doc, R> {
             let f = event_handler.clone();
             node.on(event.name(), move |evt| f(evt, i));
         }
+        println!("On handlers registered for nodes: {:?}", &nodes);
 
         // Attach event_handler to binding for future rendering
-        self.binding.borrow_mut().add_handler(event.clone(), Some(el), event_handler);
-        println!("On handlers registered for nodes: {:?}", &nodes);
+        self.binding.borrow_mut().add_handler(event.clone(), Some(el), event_handler, nodes.into_iter().map(Rc::new).collect());
     }
 }
 

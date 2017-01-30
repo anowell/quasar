@@ -14,7 +14,7 @@ pub fn init(app: &QuasarApp) {
         props: vec![],
 
         template: compile_str(r##"
-            <div><input id="name-field" value="world"></div>
+            <div><input id="name-field" value="{{name}}"></div>
             <div>Hello, {{name}}.</div>
         "##).expect("failed to compile hello template")
     };

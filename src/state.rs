@@ -11,6 +11,7 @@ pub struct Handler<'doc> {
     el: Option<String>,
     event_type: EventType,
     event_handler: Rc<Fn(webplatform::Event<'doc>, usize) + 'doc>,
+    registered_nodes: RefCell<Vec<Rc<HtmlNode<'doc>>>>,
 }
 
 pub struct Binding<'doc> {
@@ -32,11 +33,13 @@ impl<'doc> Binding<'doc> {
     pub fn add_handler(&mut self,
                        event_type: EventType,
                        el: Option<String>,
-                       event_handler: Rc<Fn(webplatform::Event<'doc>, usize) + 'doc>) {
+                       event_handler: Rc<Fn(webplatform::Event<'doc>, usize) + 'doc>,
+                       registered_nodes: Vec<Rc<HtmlNode<'doc>>>) {
         let handler = Handler {
             el: el,
             event_type: event_type,
             event_handler: event_handler,
+            registered_nodes: RefCell::new(registered_nodes),
         };
         self.handlers.push(handler);
     }
@@ -169,20 +172,27 @@ impl<'doc> AppState<'doc> {
             // Rerender the main binding
             println!("Rerender node {:?}", &binding.node);
             let props = lookup_props(&binding.node, component.props());
-            binding.node.html_set(&component.render(props));
+            binding.node.html_patch(&component.render(props));
 
             // Attach any event handlers.
-            // FIXME: This isn't very well done, since we should only need to attach
-            // them for nodes that were added. But since we blew away the entire DOM,
-            // we'll just reattach them all.
+            // Since we patched the DOM, we need to reattach any event handlers
+            // to any new nodes that might have been rendered
             for handler in &binding.handlers {
                 if let Some(ref el) = handler.el {
                     let nodes = binding.node.element_query_all(&el);
-                    for (i, node) in nodes.iter().enumerate() {
+                    let rc_nodes: Vec<_> = nodes.into_iter().map(Rc::new).collect();
+                    let mut registered_nodes = handler.registered_nodes.borrow_mut();
+
+                    for (i, node) in rc_nodes.iter().enumerate() {
+                        let rc_node = Rc::new(node);
+                        if registered_nodes.contains(&rc_node) {
+                            continue;
+                        }
                         let f = handler.event_handler.clone();
-                        node.on(handler.event_type.name(), move |event| f(event, i));
+                        rc_node.on(handler.event_type.name(), move |event| f(event, i));
                     }
-                    println!("On handlers REregistered for nodes: {:?}", &nodes);
+                    println!("On handlers REregistered for nodes: {:?}", &rc_nodes);
+                    *registered_nodes = rc_nodes;
                 }
             }
         }
