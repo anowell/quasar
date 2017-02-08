@@ -11,7 +11,8 @@ downcast-rs = "0.1.2"
 mustache = { version = "0.8.0", optional = true }
 
 [dependencies.webplatform]
-git = "https://github.com/anowell/rust-webplatform.git"
+#git = "https://github.com/anowell/rust-webplatform.git"
+path = "../rust-webplatform"
 
 [features]
 default = ["mustache"]

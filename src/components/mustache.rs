@@ -1,18 +1,17 @@
 use mustache::{encoder, Data, Template};
 use rustc_serialize::Encodable;
-use ::std::collections::HashMap;
-use super::{Component, Renderable, Properties};
+use std::collections::HashMap;
+use {Node, AppContext};
+use super::{Component, Renderable};
 
 impl<D: 'static + Encodable> Renderable for Component<D, Template> {
-    fn props(&self) -> &[&'static str] {
-        &self.props
-    }
-
-    fn render<'doc>(&self, props: Properties) -> String {
+    fn render<'doc>(&self, node: &Node, _app: &AppContext) -> String {
         let mut data = encoder::encode(&self.data).unwrap_or_else(|err| {
             println!("Failed to encode component data. {}. Using empty hash", err);
             Data::Map(HashMap::new())
         });
+
+        let props = node.get_properties(&self.props);
 
         match data {
             Data::Map(ref mut map) => {

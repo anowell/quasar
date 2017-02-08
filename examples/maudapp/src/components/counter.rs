@@ -5,7 +5,7 @@ struct CounterData {
 }
 
 impl Renderable for CounterData {
-    fn render(&self, _props: Properties) -> String {
+    fn render(&self, _node: &Node, _app: &AppContext) -> String {
         (html! {
             p { "Count: " (self.count) }
             button { "+1" }

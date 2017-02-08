@@ -5,7 +5,7 @@ use std::rc::Rc;
 use std::ops::{Deref, DerefMut};
 use webplatform::{self, HtmlNode};
 
-use {EventType, Renderable, lookup_props};
+use {AppContext, EventType, Renderable, Node};
 
 pub struct Handler<'doc> {
     el: Option<String>,
@@ -134,6 +134,14 @@ impl<'doc> AppState<'doc> {
         })
     }
 
+    // TODO: figure out if I want this to be safe to call from event handlers
+    //    if so, this needs to have the same observer rendering logic as `data_mut`
+    pub fn data_set<T: 'static>(&self, key: &str, data: T) {
+        let data_id = TypedKey::new::<T>(key);
+        let mut borrowed_state = self.state.borrow_mut();
+        borrowed_state.insert(data_id, Box::new(data));
+    }
+
     pub fn insert_binding<R: 'static + Renderable>(&self,
                                                    key: &str,
                                                    component: R,
@@ -171,8 +179,11 @@ impl<'doc> AppState<'doc> {
 
             // Rerender the main binding
             println!("Rerender node {:?}", &binding.node);
-            let props = lookup_props(&binding.node, component.props());
-            binding.node.html_patch(&component.render(props));
+
+
+            let render_node = Node::new(Rc::new(self.clone()), binding.node.clone());
+            let app_context = AppContext::new(Rc::new(self.clone()), view_id.clone());
+            binding.node.html_patch(&component.render(&render_node, &app_context));
 
             // Attach any event handlers.
             // Since we patched the DOM, we need to reattach any event handlers
@@ -197,6 +208,15 @@ impl<'doc> AppState<'doc> {
             }
         }
         queue.clear();
+    }
+
+    fn clone(&self) -> AppState<'doc> {
+        AppState {
+            bindings: self.bindings.clone(),
+            state: self.state.clone(),
+            observers: self.observers.clone(),
+            render_queue: self.render_queue.clone(),
+        }
     }
 }
 

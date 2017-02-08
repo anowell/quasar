@@ -17,10 +17,8 @@ pub use components::{Component, Properties, Renderable};
 pub use nodes::{init, QuasarApp, Node, View, Queryable, HasBind};
 pub use rustc_serialize::json::Json;
 
-use nodes::lookup_props;
 use state::{AppState, DataRef, DataMutRef, TypedKey};
 use std::rc::Rc;
-use webplatform::HtmlNode;
 
 #[cfg(feature = "mustache")]
 pub use mustache::compile_str;
@@ -72,10 +70,17 @@ impl<'doc> QuasarApp<'doc> {
 pub struct AppContext<'doc> {
     app: Rc<AppState<'doc>>,
     view_id: TypedKey,
-    node: Rc<HtmlNode<'doc>>,
 }
 
 impl<'doc> AppContext<'doc> {
+    #![doc(hidden)]
+    pub fn new(app: Rc<AppState<'doc>>, view_id: TypedKey) -> AppContext<'doc> {
+        AppContext {
+            app: app,
+            view_id: view_id,
+        }
+    }
+
     /// Get app data for a specific key
     ///
     /// This will flag the view in scope as an observer of this data bucket,

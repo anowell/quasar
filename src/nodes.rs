@@ -1,10 +1,10 @@
-use state::{AppState, Binding, TypedKey};
+use state::{AppState, Binding, DataRef, DataMutRef, TypedKey};
 use std::cell::{RefCell, Ref, RefMut};
 use std::rc::Rc;
 use std::marker::PhantomData;
 use webplatform::{self, Document, HtmlNode};
 
-use {Renderable, Properties, Event, EventType};
+use {Renderable, Properties, Event, EventType, AppContext};
 
 /// The main app object instantiated by calling `quasar::init()`
 pub struct QuasarApp<'doc> {
@@ -14,7 +14,7 @@ pub struct QuasarApp<'doc> {
 
 pub struct Node<'doc> {
     app: Rc<AppState<'doc>>,
-    node: HtmlNode<'doc>,
+    node: Rc<HtmlNode<'doc>>,
 }
 
 pub struct View<'doc, R> {
@@ -43,25 +43,48 @@ pub trait HasBind<'doc> {
     fn data_mut(&mut self) -> RefMut<Self::R>;
 }
 
+impl<'doc> QuasarApp<'doc> {
+    /// Get app data for a specific key
+    pub fn data<T: 'static>(&self, key: &str) -> Option<DataRef<T>> {
+        let type_id = TypedKey::new::<T>(&key);
+        self.app.data(key)
+    }
+
+    /// Get app data for a specific key
+    pub fn data_mut<T: 'static>(&mut self, key: &str) -> Option<DataMutRef<T>> {
+        let type_id = TypedKey::new::<T>(&key);
+        self.app.data_mut(key)
+    }
+
+    /// Get app data for a specific key
+    pub fn data_set<T: 'static>(&mut self, key: &str, data: T) {
+        let type_id = TypedKey::new::<T>(&key);
+        self.app.data_set(key, data)
+    }
+}
+
+
 impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
     type Q = Node<'doc>;
     fn query(&self, el: &str) -> Option<Node<'doc>> {
         self.document.element_query(el).map(|node| {
             Node {
                 app: self.app.clone(),
-                node: node,
+                node: Rc::new(node),
             }
         })
     }
 
     fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> View<'doc, R> {
         let node = self.document.element_query(el).expect("querySelector found no results");
-
-        let props = lookup_props(&node, component.props());
-        node.html_patch(&component.render(props));
-
         let rc_node = Rc::new(node);
+
+        let render_node = Node { app: self.app.clone(), node: rc_node.clone() };
         let key = "TODO: generate a unique key";
+
+        let app_context = AppContext::new(self.app.clone(), TypedKey::new::<R>(&key));
+        rc_node.html_patch(&component.render(&render_node, &app_context));
+
         let binding = self.app.insert_binding(key, component, rc_node.clone());
 
         View {
@@ -81,7 +104,7 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
         self.node.element_query(el).map(|node| {
             Node {
                 app: self.app.clone(),
-                node: node,
+                node: Rc::new(node),
             }
         })
     }
@@ -90,11 +113,14 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
         where RR: 'static + Renderable
     {
         let node = self.node.element_query(el).expect("querySelector found no results");
-        let props = lookup_props(&node, component.props());
-        node.html_patch(&component.render(props));
-
         let rc_node = Rc::new(node);
+
+        let render_node = Node { app: self.app.clone(), node: rc_node.clone() };
         let key = "TODO: use some sort of unique key";
+
+        let app_context = AppContext::new(self.app.clone(), TypedKey::new::<RR>(&key));
+        rc_node.html_patch(&component.render(&render_node, &app_context));
+
         let binding = self.app.insert_binding(key, component, rc_node.clone());
 
         View {
@@ -108,6 +134,14 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
 }
 
 impl<'doc> Node<'doc> {
+    #![doc(hidden)]
+    pub fn new(app: Rc<AppState<'doc>>, node: Rc<HtmlNode<'doc>> ) -> Node<'doc> {
+        Node {
+            app: app,
+            node: node,
+        }
+    }
+
     pub fn set(&self, prop: &str, value: &str) {
         self.node.prop_set_str(prop, value);
     }
@@ -115,6 +149,11 @@ impl<'doc> Node<'doc> {
     pub fn get(&self, prop: &str) -> String {
         self.node.prop_get_str(prop)
     }
+
+    pub fn get_properties(&self, keys: &[&'static str]) -> Properties {
+        lookup_props(&self.node, keys)
+    }
+
 
     pub fn checked(&self) -> bool {
         self.node.prop_get_i32("checked") != 0
@@ -154,11 +193,13 @@ impl<'doc, R: 'static + Renderable> Queryable<'doc> for View<'doc, R> {
         where RR: 'static + Renderable
     {
         let node = self.node.element_query(el).expect("querySelect returned no result");
-        let props = lookup_props(&node, component.props());
-        node.html_patch(&component.render(props));
-
         let rc_node = Rc::new(node);
+        let render_node = Node { app: self.app.clone(), node: rc_node.clone() };
         let key = "TODO: pick some unique key";
+
+        let app_context = AppContext::new(self.app.clone(), TypedKey::new::<RR>(&key));
+        rc_node.html_patch(&component.render(&render_node, &app_context));
+
         let binding = self.app.insert_binding(key, component, rc_node.clone());
 
         View {
@@ -195,7 +236,7 @@ impl<'doc, R: 'static + Renderable> View<'doc, R> {
             let event = Event {
                 binding: node,
                 target: Node {
-                    node: target_node,
+                    node: Rc::new(target_node),
                     app: app.clone(),
                 },
                 // FIXME: strange to attach a meaningless index here
@@ -238,7 +279,7 @@ impl<'doc, R: 'static + Renderable> View<'doc, R> {
             let event = Event {
                 binding: node,
                 target: Node {
-                    node: target_node,
+                    node: Rc::new(target_node),
                     app: app.clone(),
                 },
                 index: i,
@@ -291,7 +332,7 @@ pub fn init<'a, 'doc: 'a>() -> QuasarApp<'a> {
 }
 
 
-pub fn lookup_props<'doc>(node: &HtmlNode<'doc>, keys: &[&'static str]) -> Properties {
+fn lookup_props<'doc>(node: &HtmlNode<'doc>, keys: &[&'static str]) -> Properties {
     let mut props = Properties::new();
     for prop in keys {
         let mut val = node.prop_get_str(prop);

@@ -10,7 +10,7 @@ struct TodoList {
 }
 
 impl Renderable for TodoList {
-    fn render(&self, _props: Properties) -> String {
+    fn render(&self, _node: &Node, _app: &AppContext) -> String {
         (html! {
             h3 { "To Do List (" (self.items.len()) " items)" }
             ul id="todo-ul" {
