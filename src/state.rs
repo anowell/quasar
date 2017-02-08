@@ -182,7 +182,7 @@ impl<'doc> AppState<'doc> {
 
 
             let render_node = Node::new(Rc::new(self.clone()), binding.node.clone());
-            let app_context = AppContext::new(Rc::new(self.clone()), view_id.clone());
+            let app_context = AppContext::new(Rc::new(self.clone()), Some(view_id.clone()));
             binding.node.html_patch(&component.render(&render_node, &app_context));
 
             // Attach any event handlers.

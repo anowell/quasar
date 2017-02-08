@@ -69,12 +69,12 @@ impl<'doc> QuasarApp<'doc> {
 /// Provides select access to the global `QuasarApp` object in the context of a specific `View`
 pub struct AppContext<'doc> {
     app: Rc<AppState<'doc>>,
-    view_id: TypedKey,
+    view_id: Option<TypedKey>,
 }
 
 impl<'doc> AppContext<'doc> {
     #![doc(hidden)]
-    pub fn new(app: Rc<AppState<'doc>>, view_id: TypedKey) -> AppContext<'doc> {
+    pub fn new(app: Rc<AppState<'doc>>, view_id: Option<TypedKey>) -> AppContext<'doc> {
         AppContext {
             app: app,
             view_id: view_id,
@@ -87,7 +87,9 @@ impl<'doc> AppContext<'doc> {
     ///   and any modifications to data at this key will cause this view to be re-rendered.
     pub fn data<T: 'static>(&self, key: &str) -> Option<DataRef<T>> {
         let type_id = TypedKey::new::<T>(&key);
-        self.app.add_observer(type_id, self.view_id.clone());
+        if let Some(ref view_id) = self.view_id {
+            self.app.add_observer(type_id, view_id.clone());
+        }
         self.app.data(key)
     }
 
@@ -99,7 +101,9 @@ impl<'doc> AppContext<'doc> {
     ///   of the current event is finished.
     pub fn data_mut<T: 'static>(&mut self, key: &str) -> Option<DataMutRef<T>> {
         let type_id = TypedKey::new::<T>(&key);
-        self.app.add_observer(type_id, self.view_id.clone());
+        if let Some(ref view_id) = self.view_id {
+            self.app.add_observer(type_id, view_id.clone());
+        }
         self.app.data_mut(key)
     }
 }
@@ -109,6 +113,8 @@ pub struct Event<'doc, N> {
     pub target: Node<'doc>,
     // The node the event was attached to (may include data binding)
     pub binding: N,
+    // The globally shared app context
+    pub app: AppContext<'doc>,
     // The target's index offset when event was attached multiple times for a selector
     pub index: usize,
 }

@@ -35,10 +35,3 @@ impl EventType {
         }
     }
 }
-
-
-// pub struct Event<'a, 'b, 'c, R> {
-//     pub app: AppContext<'a>,
-//     pub target: Element<'b, R>,
-//     pub view: View<'c, R>,
-// }
