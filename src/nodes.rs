@@ -3,6 +3,7 @@ use std::cell::{RefCell, Ref, RefMut};
 use std::rc::Rc;
 use std::marker::PhantomData;
 use webplatform::{self, Document, HtmlNode};
+use uuid::Uuid;
 
 use {Renderable, Properties, Event, EventType, AppContext};
 
@@ -89,16 +90,16 @@ impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
         let rc_node = Rc::new(node);
 
         let render_node = Node { app: self.app.clone(), node: rc_node.clone() };
-        let key = "TODO: generate a unique key";
+        let key = Uuid::new_v4().to_string();
 
         let app_context = AppContext::new(self.app.clone(), Some(TypedKey::new::<R>(&key)));
         rc_node.html_patch(&component.render(&render_node, &app_context));
 
-        let binding = self.app.insert_binding(key, component, rc_node.clone());
+        let binding = self.app.insert_binding(&key, component, rc_node.clone());
 
         View {
             app: self.app.clone(),
-            key: key.to_string(),
+            key: key,
             node: rc_node,
             binding: binding,
             phantom: PhantomData,
@@ -125,16 +126,16 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
         let rc_node = Rc::new(node);
 
         let render_node = Node { app: self.app.clone(), node: rc_node.clone() };
-        let key = "TODO: use some sort of unique key";
+        let key = Uuid::new_v4().to_string();
 
         let app_context = AppContext::new(self.app.clone(), Some(TypedKey::new::<RR>(&key)));
         rc_node.html_patch(&component.render(&render_node, &app_context));
 
-        let binding = self.app.insert_binding(key, component, rc_node.clone());
+        let binding = self.app.insert_binding(&key, component, rc_node.clone());
 
         View {
             app: self.app.clone(),
-            key: key.to_string(),
+            key: key,
             node: rc_node,
             binding: binding,
             phantom: PhantomData,
@@ -257,12 +258,12 @@ impl<'doc, R: 'static + Renderable> Queryable<'doc> for View<'doc, R> {
         let node = self.node.element_query(el).expect("querySelect returned no result");
         let rc_node = Rc::new(node);
         let render_node = Node { app: self.app.clone(), node: rc_node.clone() };
-        let key = "TODO: pick some unique key";
+        let key = Uuid::new_v4().to_string();
 
         let app_context = AppContext::new(self.app.clone(), Some(TypedKey::new::<RR>(&key)));
         rc_node.html_patch(&component.render(&render_node, &app_context));
 
-        let binding = self.app.insert_binding(key, component, rc_node.clone());
+        let binding = self.app.insert_binding(&key, component, rc_node.clone());
 
         View {
             app: self.app.clone(),

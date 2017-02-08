@@ -1,5 +1,6 @@
 extern crate webplatform;
 extern crate rustc_serialize;
+extern crate uuid;
 
 #[macro_use]
 extern crate downcast_rs;

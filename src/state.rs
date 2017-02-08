@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::any::{Any, TypeId};
 use std::cell::{RefCell, Ref, RefMut};
 use std::rc::Rc;
@@ -65,7 +65,7 @@ type DataStore = HashMap<TypedKey, Box<Any>>;
 type BindingStore<'doc> = HashMap<TypedKey, Rc<RefCell<Binding<'doc>>>>;
 
 // Map data_id to view_ids that are observing said data
-type ObserverStore = HashMap<TypedKey, Vec<TypedKey>>;
+type ObserverStore = HashMap<TypedKey, HashSet<TypedKey>>;
 
 // Set of view_id that need rerendered
 type RenderQueue = Vec<TypedKey>;
@@ -164,8 +164,8 @@ impl<'doc> AppState<'doc> {
 
     pub fn add_observer(&self, data_id: TypedKey, view_id: TypedKey) {
         let mut observers = self.observers.borrow_mut();
-        let mut partition = observers.entry(data_id).or_insert_with(|| Vec::new());
-        partition.push(view_id);
+        let mut partition = observers.entry(data_id).or_insert_with(|| HashSet::new());
+        partition.insert(view_id);
     }
 
     pub fn process_render_queue(&self) {
@@ -179,7 +179,6 @@ impl<'doc> AppState<'doc> {
 
             // Rerender the main binding
             println!("Rerender node {:?}", &binding.node);
-
 
             let render_node = Node::new(Rc::new(self.clone()), binding.node.clone());
             let app_context = AppContext::new(Rc::new(self.clone()), Some(view_id.clone()));
