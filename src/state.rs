@@ -3,7 +3,7 @@ use std::any::{Any, TypeId};
 use std::cell::{RefCell, Ref, RefMut};
 use std::rc::Rc;
 use std::ops::{Deref, DerefMut};
-use webplatform::{self, HtmlNode};
+use webplatform::{self, Document, HtmlNode};
 
 use {AppContext, EventType, Renderable, Node};
 
@@ -71,8 +71,8 @@ type ObserverStore = HashMap<TypedKey, HashSet<TypedKey>>;
 type RenderQueue = Vec<TypedKey>;
 
 
-
 pub struct AppState<'doc> {
+    pub document: Rc<Document<'doc>>,
     bindings: Rc<RefCell<BindingStore<'doc>>>,
     state: Rc<RefCell<DataStore>>,
     observers: Rc<RefCell<ObserverStore>>,
@@ -80,12 +80,13 @@ pub struct AppState<'doc> {
 }
 
 impl<'doc> AppState<'doc> {
-    pub fn new() -> AppState<'doc> {
+    pub fn new(document: Document<'doc>) -> AppState<'doc> {
         AppState {
             bindings: Rc::new(RefCell::new(HashMap::new())),
             state: Rc::new(RefCell::new(HashMap::new())),
             observers: Rc::new(RefCell::new(HashMap::new())),
             render_queue: Rc::new(RefCell::new(Vec::new())),
+            document: Rc::new(document),
         }
     }
 
@@ -215,6 +216,7 @@ impl<'doc> AppState<'doc> {
             state: self.state.clone(),
             observers: self.observers.clone(),
             render_queue: self.render_queue.clone(),
+            document: self.document.clone(),
         }
     }
 }

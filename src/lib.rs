@@ -11,15 +11,19 @@ extern crate mustache;
 mod events;
 mod components;
 mod state;
-mod nodes;
+mod node;
+mod view;
+mod app;
 
 pub use events::EventType;
 pub use components::{Component, Properties, Renderable};
-pub use nodes::{init, QuasarApp, Node, View, Queryable, HasBind};
+pub use app::{init, QuasarApp, AppContext};
+pub use node::Node;
+pub use view::View;
 pub use rustc_serialize::json::Json;
+use webplatform::HtmlNode;
 
-use state::{AppState, DataRef, DataMutRef, TypedKey};
-use std::rc::Rc;
+use std::cell::{Ref, RefMut};
 
 #[cfg(feature = "mustache")]
 pub use mustache::compile_str;
@@ -67,54 +71,47 @@ impl<'doc> QuasarApp<'doc> {
 }
 
 
-/// Provides select access to the global `QuasarApp` object in the context of a specific `View`
-pub struct AppContext<'doc> {
-    app: Rc<AppState<'doc>>,
-    view_id: Option<TypedKey>,
+
+
+
+fn lookup_props<'doc>(node: &HtmlNode<'doc>, keys: &[&'static str]) -> Properties {
+    let mut props = Properties::new();
+    for prop in keys {
+        let mut val = node.prop_get_str(prop);
+        if val.is_empty() {
+            val = node.attr_get_str(prop);
+        }
+        props.insert(prop, val);
+    }
+    props
 }
 
-impl<'doc> AppContext<'doc> {
-    #![doc(hidden)]
-    pub fn new(app: Rc<AppState<'doc>>, view_id: Option<TypedKey>) -> AppContext<'doc> {
-        AppContext {
-            app: app,
-            view_id: view_id,
-        }
-    }
 
-    /// Get app data for a specific key
-    ///
-    /// This will flag the view in scope as an observer of this data bucket,
-    ///   and any modifications to data at this key will cause this view to be re-rendered.
-    pub fn data<T: 'static>(&self, key: &str) -> Option<DataRef<T>> {
-        let type_id = TypedKey::new::<T>(&key);
-        if let Some(ref view_id) = self.view_id {
-            self.app.add_observer(type_id, view_id.clone());
-        }
-        self.app.data(key)
-    }
+pub trait Queryable<'doc> {
+    type Q: Queryable<'doc>;
 
-    /// Get app data for a specific key
-    ///
-    /// This will flag the view in scope as an observer of this data bucket,
-    ///   and any modifications to data at this key will cause this view to be re-rendered.
-    /// It will also cause all observers of this view to be re-rendered after processing
-    ///   of the current event is finished.
-    pub fn data_mut<T: 'static>(&mut self, key: &str) -> Option<DataMutRef<T>> {
-        let type_id = TypedKey::new::<T>(&key);
-        if let Some(ref view_id) = self.view_id {
-            self.app.add_observer(type_id, view_id.clone());
-        }
-        self.app.data_mut(key)
-    }
+    fn query(&self, el: &str) -> Option<Self::Q>;
+    // fn query_all(&self, el: &str) -> Vec<Self>
+
+    fn bind<R>(&self, el: &str, component: R) -> View<'doc, R> where R: 'static + Renderable;
+    // fn bind_each(&self, el: &str, component: Vec<R>) -> BindEachNode<'doc, R>;
 }
+
+pub trait HasBind<'doc> {
+    type R: Renderable;
+
+    fn data(&self) -> Ref<Self::R>;
+    fn data_mut(&mut self) -> RefMut<Self::R>;
+}
+
+
 
 pub struct Event<'doc, N> {
     /// The node that triggered the event
     pub target: Node<'doc>,
     // The node the event was attached to (may include data binding)
     pub binding: N,
-    // The globally shared app context
+    // The globally shared app context (provides access to document root)
     pub app: AppContext<'doc>,
     // The target's index offset when event was attached multiple times for a selector
     pub index: usize,
