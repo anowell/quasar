@@ -85,17 +85,24 @@ rustup target add asmjs-unknown-emscripten
 rustup target add wasm32-unknown-emscripten
 ```
 
-Then `bin/build-asm` wraps cargo to simplify much of the build process
+Then to simplify building, install cargo-web:
 
 ```bash
-bin/build-asm # build quasar
-bin/build-asm reverser # build quasar and the reverser example (output copied to `static/`)
-bin/build-asm app # build quasar and examples/app (output copied to `exaples/app/static/`)
-bin/build all # build everyting
+cargo install cargo-web
 ```
 
-For any of the built examples, you can serve the result with any simple server, e.g. with the official nginx docker image:
+Now you can build quasar with:
 
 ```bash
-docker run --rm -it -v `pwd`/static:/usr/share/nginx/html -p 8081:80 nginx
+cargo-web build
 ```
+
+And you can run the various examples with:
+
+```bash
+cargo-web start --example reverser
+cd examples/app && cargo-web start
+cd examples/maudapp && cargo-web start
+```
+
+(Note, until cargo-web is a bit more feature complete, there are also build script in the bin directory.)
