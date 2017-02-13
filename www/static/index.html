@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Quasar Framework</title>
+    <meta name="author" content="Anthony Nowell">
+    <meta name="description" content="{{ description }}">
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="FIXME">
+    <meta property="og:title" content="Quasar Framework" />
+    <meta property="og:image" content="FIXME" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@atnowell" />
+    <meta name="twitter:title" content="Quasar Framework" />
+    <meta name="twitter:description" content="An experimental Rust-to-{WASM/ASMJS} framework." />
+    <meta name="twitter:image" content="FIXME" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="css/main.css">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Roboto+Slab|Source+Code+Pro" rel="stylesheet">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/railscasts.css">
+  </head>
+  <body>
+    <div class="cover dark" style="position: relative; background-color: transparent;">
+      <div class="stars"></div>
+      <div class="twinkling"></div>
+      <div class="clouds"></div>
+      <a href="https://github.com/anowell/quasar" class="github-corner" aria-label="View source on Github"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#fff; color:#222; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+      <div class="container">
+        <h1 style="margin-top: 0px;"><img src="images/quasar-logo.png" style="width: 400px;" title="Quasar"></h1>
+        <h3>An experimental Rust frontend framework.</h3>
+        <div style="margin-top: 120px; text-align: center;">
+          <a class="button github-button" href="https://github.com/anowell/quasar" data-icon="octicon-star" data-style="mega" data-count-href="/anowell/quasar/stargazers" data-count-api="/repos/anowell/quasar#stargazers_count" data-count-aria-label="# stargazers on GitHub" aria-label="Star anowell/quasar on GitHub">View on Github</a>
+        </div>
+
+        <hr style="margin-top: 120px;">
+        <div class="grid">
+          <div class="col">
+            <h3>Component Binding</h3>
+            <p>Bind components to the DOM. Quasar keeps your views up-to-date when you mutate
+              component (or application) state.
+            </p>
+          </div>
+          <div class="col">
+            <h3>Type Safe</h3>
+            <p>Your component types are propogated into events. Never null. Never undefined. Never TypeError.
+              No need to check to see if it quacks like a duck.
+            </p>
+          </div>
+          <div class="col">
+            <h3>Swappable Templating</h3>
+            <p>Bring your own templating engine. Quasar has an out-of-the-box default,
+              but it is trivial to swap for your own templating engine.
+            </p>
+          </div>
+        </div>
+        <hr>
+
+
+        <p>This page is powered by Quasar (<a href="https://github.com/anowell/quasar/tree/master/examples/www">see how</a>) and compiled to ASM.js. See also the <a href="/wasm.html">WASM variant</a> (coming soon).
+      </div>
+    </div>
+
+    <div class="cover">
+      <div class="container">
+        <h2>Pick a templating engine:</h2>
+        <p>The examples on this site were built for each of these engines. Toggle between engines to see how they differ.</p>
+        <div class="grid">
+          <div class="col">
+            <input class="radio-tile-button" type="radio" name="template" data-template="bart">
+            <div class="radio-tile active">
+              <h3>Bart</h3>
+              <div>Compile-time templates inspired by Mustache.</div>
+            </div>
+          </div>
+          <div class="col">
+            <input class="radio-tile-button" type="radio" name="template" data-template="maud">
+            <div class="radio-tile">
+              <h3>Maud</h3>
+              <div>Rust macro-based compile-time templates.</div>
+            </div>
+          </div>
+          <div class="col">
+            <input class="radio-tile-button" type="radio" name="template" data-template="mustache">
+            <div class="radio-tile">
+              <h3>Mustache</h3>
+              <div>Traditional runtime template engine with Mustache.</div>
+            </div>
+          </div>
+        </div>
+        <p>...and supporting your preferred templating engine is probably trivial.</p>
+      </div>
+    </div>
+
+    <div class="cover dark">
+      <div class="container">
+        <h2>A Basic Counter</h2>
+        <div class="grid">
+          <div class="col-2">
+            <div id="counter-code"></div>
+          </div>
+
+          <div class="col">
+              <label class="active">Live Demo</label>
+              <pane>
+                <div class="demo-container">
+                  <div id="counter-bart"></div>
+                </div>
+              </pane>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="cover">
+      <div class="container">
+        <div class="grid">
+          <div class="col">
+            <h3>Data Observers</h3>
+            <p>Accessing data makes your component an observer of that data. Modifying data causes its observers to be rerendered. This is all enforced by Rust's type system.</p>
+            <p>(And yes, you can undermine these behaviors by using interior mutability)</p>
+          </div>
+          <div class="col">
+            <h3>DOM Patching</h3>
+            <div>Rendering templates is accomplished through DOM patching. Currently Quasar embeds morphdom.js for this, but be great to explore alternative ideas for updating the DOM.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="cover dark">
+      <div class="container">
+        <h2>To Do App</h2>
+        <div class="grid">
+          <div class="col-2">
+            <div id="todo-code"></div>
+          </div>
+
+          <div class="col">
+              <label class="active">Live Demo</label>
+              <pane>
+                <div class="demo-container">
+                  <div id="todo-bart"></div>
+                </div>
+              </pane>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="cover">
+      <div class="container">
+        <div class="grid">
+          <div class="col">
+            <h3>Isomorphic Rendering</h3>
+            <p>The same rendering can be used both server and client side.</p><p>That said, the patterns and details for doing so are not established yet.</p>
+          </div>
+          <div class="col">
+            <h3>Extensible Rendering</h3>
+            <p>By exposing the node and app in the <code>Renderable</code> trait, it should be possible to explore ideas for more complex templating engines that enable features like 2-way binding or custom attributes with associated behavior.</p>
+          </div>
+          <div class="col">
+            <h3>Emscripten Ecosystem</h3>
+            <p>Lots of existing rust crates will work like normal. Of course, there is still room for this story to improve. For example, <a href="https://crates.io/crates/syntect">syntect</a> could replace highlight.js
+            on this page <a href="https://github.com/trishume/syntect/pull/34">soon</a>. And <a href="https://crates.io/crates/reqwest">reqwest</a> could eventually enable web clients that work both server and client side.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="cover dark">
+      <div class="container">
+        <h2>Backend Integration</h2>
+        <p>No demo yet.</p>
+        <p>The story around integrating quasar with a backend is still just conceptual.</p>
+      </div>
+    </div>
+
+    <div class="cover">
+      <div class="container">
+        <h3>Should I use Quasar?</h3>
+        <p>
+          <b>Probably Not.</b>
+          Nothing about Quasar is stable. Performance is probably attrocious. Rendering has plenty of quirks. The API is still plenty awkward. And major refactors are still anticipated.
+        </p>
+
+        <h3>How can I contribute?</h3>
+        <p>
+          There are tons of ways to contribute to Quasar, directly or indirectly, depending on your interests. The possibilities include contributing to the design the architecture and API
+          to building demos to a variety of other ideas that more generally benefit Rust's emscripten ecosystem. There are <a href="https://github.com/anowell/quasar/labels/help%20wanted">issues tracking these</a>
+          and several other areas that could benefit from contributors, and feel free to <a href="https://github.com/anowell/quasar/issues/new">file any new issues</a>.
+        </p>
+    </div>
+
+
+    <script src="js/highlight.pack.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+      // Since Quasar adds and removes <pre><code> blocks
+      // we setup some mutation observers to watch for
+      // such blocks and then highlight them
+      // TODO: simplify triggering these from Quasar event handlers (or switch to syntect)
+
+      (function(win) {
+          'use strict';
+
+          var listeners = [],
+          doc = win.document,
+          MutationObserver = win.MutationObserver || win.WebKitMutationObserver,
+          observer;
+
+          function ready(selector, fn) {
+              // Store the selector and callback to be monitored
+              listeners.push({
+                  selector: selector,
+                  fn: fn
+              });
+              if (!observer) {
+                  // Watch for changes in the document
+                  observer = new MutationObserver(check);
+                  observer.observe(doc.documentElement, {
+                      childList: true,
+                      subtree: true
+                  });
+              }
+              // Check if the element is currently in the DOM
+              check();
+          }
+
+          function check() {
+              // Check the DOM for elements matching a stored selector
+              for (var i = 0, len = listeners.length, listener, elements; i < len; i++) {
+                  listener = listeners[i];
+                  // Query for elements matching the specified selector
+                  elements = doc.querySelectorAll(listener.selector);
+                  for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                      element = elements[j];
+                      // Make sure the callback isn't invoked with an element already observed
+                      if (!element.dataset.observed) {
+                          element.dataset.observed = true
+                          // Invoke the callback with the element
+                          listener.fn.call(element, element);
+                      }
+                  }
+              }
+          }
+          win.ready = ready;
+      })(this);
+
+      ready('pre code', function(element) {
+          hljs.highlightBlock(element);
+      });
+    </script>
+
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-91878567-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+  </body>
+</html>

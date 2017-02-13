@@ -1,0 +1,11 @@
+<h3>To Do List</h3>
+<ul id="todo-list">
+  {{#items}}
+    <li class="todo-item {{#.complete?}}complete{{/.complete}}">
+      <input type="checkbox" {{#.complete?}}checked{{/.complete}}>
+      {{.label}}
+    </li>
+  {{/items}}
+</ul>
+<input id="message" type="text">
+<button>Add</button>

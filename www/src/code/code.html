@@ -1,0 +1,7 @@
+<section>
+  {{#files}}
+    <input id="tab-{{demo}}-{{.filename}}" class="radio-tab-button" type="radio" name="{{demo}}-grp" checked>
+    <label for="tab-{{demo}}-{{.filename}}">{{.filename}}</label>
+    <pane><pre><code class="{{.language}}" data-template="{{template}}">{{.code}}</code></pre></pane>
+  {{/files}}
+</section>

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+cargo build --target=asmjs-unknown-emscripten --release
+rsync -avh static target/
+cp target/asmjs-unknown-emscripten/release/quasar-www.js target/static/js/app.js
+
+echo "Finished."

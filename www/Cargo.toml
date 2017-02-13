@@ -1,0 +1,19 @@
+[package]
+name = "quasar-www"
+version = "0.1.0"
+authors = ["Anthony Nowell <anowell@gmail.com>"]
+
+[dependencies]
+rustc-serialize = "0.3.18"
+maud = "0.16.0"
+maud_macros = "0.16.0"
+
+[dependencies.bart]
+git = "https://github.com/maghoff/bart"
+
+[dependencies.bart_derive]
+git = "https://github.com/maghoff/bart"
+
+[dependencies.quasar]
+version = "*"
+path = ".."

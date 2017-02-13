@@ -1,0 +1,366 @@
+/* Base CSS */
+body
+{
+    font-family: 'Open Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    width: auto;
+    height: 100%;
+    min-height: 100%;
+    margin: 0;
+    margin-bottom: 60px;
+    background-color: #fcfcfc;
+    color: #333;
+}
+
+
+h1, h2 {
+    font-family: 'Roboto Slab', serif;
+    font-size: 40px;
+    font-weight: 400;
+}
+
+h3 {
+    font-size: 28px;
+}
+
+h3, h4, h5, h6 {
+    margin-top: 0px;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+ul {
+    padding-left: 0px;
+    list-style: none;
+}
+
+hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid #bbb;
+    margin: 30px 0;
+    padding: 0;
+}
+
+a, a:visited, a:link {
+    text-decoration: none;
+    color: #347ec2
+}
+
+a:hover, a:active {
+    color: #005db1;
+}
+
+code {
+    font-size: 14px;
+    font-family: 'Source Code Pro', monospace;
+}
+
+button, a.button {
+  padding: 4px 12px;
+  color: #222;
+  background-color: #fafafa;
+  border: 1px solid #222;
+  border: 0 none;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  border: 0 none;
+  border-radius: 4px;
+}
+
+button:hover {
+    transition: all 60ms ease;
+    opacity: .85;
+}
+
+button:active {
+    transition: all 60ms ease;
+    opacity: .75;
+}
+
+button:focus {
+    outline: 1px dotted white;
+    outline-offset: -4px;
+}
+
+/* Basic Grid */
+
+.grid {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.col {
+    flex: 1 0 0;
+    /*width: 0;*/
+    margin-right: 15px;
+    position: relative;
+}
+
+.col-2 {
+    /*flex-basis: auto;*/
+    flex: 2 0 0;
+    margin-right: 15px;
+}
+
+@media (max-width: 480px) {
+  .grid {
+    display: block;
+  }
+  .col {
+    width: 100%;
+    margin-left: 0px;
+    margin-right: 0px;
+  }
+}
+
+/* Site Layout */
+.container {
+    margin: auto;
+    max-width: 960px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.frontpage {
+    margin: auto;
+    max-width: 480px;
+    text-align: center;
+}
+
+.frontpage img {
+    margin-top: 40px;
+}
+
+
+
+.top-nav {
+    font-size: 32px;
+}
+
+.top-nav {
+    margin: auto;
+    max-width: 960px;
+    padding: 5px;
+    position: relative;
+    margin-top: 20px;
+    margin-bottom: -20px;
+}
+
+@media (min-width: 1224px) {
+    .top-nav {
+        margin-left: 40px;
+        margin-top: 35px;
+        position: absolute;
+    }
+}
+
+/* Shared Style */
+
+.cover {
+    min-height: 260px;
+    width: 100%;
+    padding-top: 40px;
+    padding-bottom: 80px;
+}
+
+.dark {
+    background-color: #222;
+    color: #aaa;
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4 {
+    color: #ddd;
+}
+
+section {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+label {
+  background: #333;
+  border: 1px solid #ddd;
+  padding: .7em 1em;
+  cursor: pointer;
+  z-index: 1;
+  margin-left: -1px;
+  display: inline-block;
+}
+
+label.active {
+  background: #222;
+  border-bottom: 1px solid #222;
+}
+
+label:first-of-type {
+  margin-left: 0;
+}
+
+pane {
+  margin-top: -1px;
+  width: 100%;
+  border: 1px solid #ddd;
+  order: 1;
+  display: block;
+}
+
+.demo-container {
+    padding: 1em;
+}
+
+
+.radio-tab-button, .radio-tab-button + label + pane  {
+  display: none;
+}
+
+.radio-tab-button:checked + label {
+  background: #222;
+  border-bottom: 1px solid #222;
+}
+
+.radio-tab-button:checked + label + pane {
+  display: block;
+}
+
+.radio-tile-button {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    cursor: pointer;
+}
+
+.radio-tile {
+    border: 2px solid #ccc;
+    padding: 15px 10px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.radio-tile:hover {
+    border: 2px solid #999;
+}
+
+.radio-tile-button:checked + .radio-tile {
+    border: 2px solid #333;
+}
+
+
+@media (min-width: 768px) {
+    .float-right {
+        float: right;
+        margin-left: 15px;
+        margin-bottom: 5px;
+    }
+    .float-right img {
+        width: auto;
+    }
+}
+
+/* Focused Style */
+
+.frontpage .about-me {
+    color: #bbb;
+}
+
+.frontpage .social-nav {
+    font-size: 20px;
+}
+
+nav {
+    font-family: 'Open Sans', sans-serif;
+}
+
+
+/* Demo Styles */
+.complete {
+    text-decoration: line-through;
+}
+
+
+
+
+/* Animation */
+
+@keyframes move-twink-back {
+    from {background-position:0 0;}
+    to {background-position:-10000px 5000px;}
+}
+@-webkit-keyframes move-twink-back {
+    from {background-position:0 0;}
+    to {background-position:-10000px 5000px;}
+}
+@-moz-keyframes move-twink-back {
+    from {background-position:0 0;}
+    to {background-position:-10000px 5000px;}
+}
+@-ms-keyframes move-twink-back {
+    from {background-position:0 0;}
+    to {background-position:-10000px 5000px;}
+}
+
+@keyframes move-clouds-back {
+    from {background-position:0 0;}
+    to {background-position:10000px 0;}
+}
+@-webkit-keyframes move-clouds-back {
+    from {background-position:0 0;}
+    to {background-position:10000px 0;}
+}
+@-moz-keyframes move-clouds-back {
+    from {background-position:0 0;}
+    to {background-position:10000px 0;}
+}
+@-ms-keyframes move-clouds-back {
+    from {background-position: 0;}
+    to {background-position:10000px 0;}
+}
+
+.stars, .twinkling, .clouds {
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+.stars {
+  background:#000 url(http://www.script-tutorials.com/demos/360/images/stars.png) repeat top center;
+  z-index:-3;
+}
+
+.twinkling{
+  background:transparent url(http://www.script-tutorials.com/demos/360/images/twinkling.png) repeat top center;
+  z-index:-2;
+
+  -moz-animation:move-twink-back 200s linear infinite;
+  -ms-animation:move-twink-back 200s linear infinite;
+  -o-animation:move-twink-back 200s linear infinite;
+  -webkit-animation:move-twink-back 200s linear infinite;
+  animation:move-twink-back 200s linear infinite;
+}
+
+.clouds{
+    background:transparent url(http://www.script-tutorials.com/demos/360/images/clouds3.png) repeat top center;
+    z-index:-1;
+
+  -moz-animation:move-clouds-back 200s linear infinite;
+  -ms-animation:move-clouds-back 200s linear infinite;
+  -o-animation:move-clouds-back 200s linear infinite;
+  -webkit-animation:move-clouds-back 200s linear infinite;
+  animation:move-clouds-back 200s linear infinite;
+}
