@@ -23,7 +23,7 @@ Everything is experimental, half-baked, full of caveats, regularly broken, and s
 
 Currently, Quasar combines some basic JQuery-like semantics with state and component management while ensuring that state modifications trigger rerendering of components that depend on that data.
 
-- **Template engines** are swappable. There are [`examples`](https://github.com/anowell/quasar/tree/master/examples) using [mustache](https://crates.io/crates/mustache)(default) and [maud](https://crates.io/crates/maud). But replacing the template engine is just a matter of implementing the `Renderable` trait.
+- **Template engines** are swappable. There are [examples](https://anowell.github.io/quasar/) using [bart](https://crates.io/crates/bart), [mustache](https://crates.io/crates/mustache) and [maud](https://crates.io/crates/maud). But replacing the template engine is just a matter of implementing the `Renderable` trait.
 - **Components** are the combination of data with a template or other rendering process - really anything that implements `Renderable`. Quasar takes ownership of your components when binding them to the DOM and makes the data available to your event handlers via `data()` and `data_mut()` methods. In general, methods that mutate the component will result in re-rendering it at the end of the event handler. Note, component data is local to the component and not shareable outside your component.
 - **Views** are the result of one-way binding of a component to the DOM. You can also attach event listeners to views. Note, that currently rendering a view uses the destructive `innerHtml = ...` approach, which kills DOM state like input focus, so eventually some sort of DOM diffing/patching or virtual DOM solution will become pretty important.
 - **App Data** is shared state that is also available to event handlers. It is partitioned by a key (and by `TypeId`), and any attempt to read a shared data partition (calling `data(key)`) automatically registers your view as an observer of that data partion. Any attempt to write to an app data partition (calling `data_mut(key)`) will automatically add all observer views for that data partition to the re-render queue process at the end of the event handler.
@@ -41,23 +41,18 @@ A basic example might include an HTML file like this:
 You can bind and update data with a snippet like this:
 
 ```rust
+#[derive(BartDisplay)]
+#[template_string = "<p>Count: {{count}}</p><button>+1</button>"]
+struct CounterData { count: u32 }
+
 fn main() {
     let mut app = quasar::init();
 
-    let component = Component {
-        props: vec![],
-        data: CounterData {
-            count: 0
-        },
-        template: compile_str(r##"
-            <p>Count: {{count}}</p>
-            <button>+1</button>
-        "##).expect("failed to compile counter template")
-    };
-
+    let component = CounterData { count: 0 };
     app.bind("#counter", component)
+        .query("button").unwrap()
         .on(EventType::Click, |mut evt| {
-            evt.view.data_mut().count += 1;
+            evt.binding.data_mut().count += 1;
         });
 
     app.spin();
@@ -74,7 +69,7 @@ Quasar is still exploring some ideas and working to better understand what works
 - What might it look like to have "isomorphic" rust, where the same rendering code can run both client and server side?
 - How can I leverage the type system to achieve more flexible and/or more robust frontend development? (e.g. trait-based templating, leveraging immutable vs mutable access as a gate for identifying views that observer or mutate specific data.)
 
-Admittedly Quasar is absent any perf goals at this time. Quasar also lacks a clear vision for why Quasar would be "better than X", so I'll probably ask myself "what problem is Quasar really solving?" multiple times throughout this experimentation.
+Admittedly Quasar is absent any perf goals at this time.
 
 ## Building
 
@@ -85,24 +80,19 @@ rustup target add asmjs-unknown-emscripten
 rustup target add wasm32-unknown-emscripten
 ```
 
-Then to simplify building, install cargo-web:
-
-```bash
-cargo install cargo-web
-```
-
 Now you can build quasar with:
 
 ```bash
+cargo build --target=asmjs-unknown-emscripten
+
+# or using cargo-web
+cargo install cargo-web
 cargo-web build
 ```
 
-And you can run the various examples with:
+And you can run the various examples by running `cargo-web start` from their directory:
 
 ```bash
-cargo-web start --example reverser
-cd examples/app && cargo-web start
-cd examples/maudapp && cargo-web start
+cd www
+cargo-web start
 ```
-
-(Note, until cargo-web is a bit more feature complete, there are also build script in the bin directory.)
