@@ -17,7 +17,6 @@ pub struct Handler<'doc> {
 pub struct Binding<'doc> {
     pub node: Rc<HtmlNode<'doc>>,
     component: Box<Renderable>,
-    // FIXME: Store selector and handlers, and blindly reapply handlers after rerender until we can patch DOM more conservatively
     handlers: Vec<Handler<'doc>>,
 }
 
@@ -135,10 +134,19 @@ impl<'doc> AppState<'doc> {
         })
     }
 
-    // TODO: figure out if I want this to be safe to call from event handlers
-    //    if so, this needs to have the same observer rendering logic as `data_mut`
     pub fn data_set<T: 'static>(&self, key: &str, data: T) {
         let data_id = TypedKey::new::<T>(key);
+
+        {
+            let observers = self.observers.borrow();
+            if let Some(partition_observers) = observers.get(&data_id) {
+                let mut queue = self.render_queue.borrow_mut();
+                for observer in partition_observers {
+                    queue.push(observer.clone());
+                }
+            }
+        }
+
         let mut borrowed_state = self.state.borrow_mut();
         borrowed_state.insert(data_id, Box::new(data));
     }
