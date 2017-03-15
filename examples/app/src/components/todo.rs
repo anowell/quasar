@@ -32,10 +32,7 @@ pub fn init(app: &QuasarApp) {
 
     let view = app.bind("#todo-list", todo_list);
 
-    // TODO: use view.query("button").on(...)
-    // but since we don't patch the DOM yet, the attached element
-    // is always destroyed, so we need to attach the event to a nested selector fo now
-    view.on_each(EventType::Click, "button", |mut evt| {
+    view.query("button").on(EventType::Click, |mut evt| {
         match evt.binding.query("#message") {
             Some(node) => {
                 let item = TodoItem { label: node.get("value"), complete: false };
