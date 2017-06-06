@@ -16,12 +16,12 @@ impl Renderable for TodoList {
             ul id="todo-ul" {
                 @for item in &self.items {
                     li class={ "todo-item " (item.complete) } {
-                        input type="checkbox" checked?[item.complete]
+                        input type="checkbox" checked?[item.complete] /
                         (item.label)
                     }
                 }
             }
-            input id="message" type="text"
+            input id="message" type="text" /
             button { "Add" }
         }).into_string()
     }
