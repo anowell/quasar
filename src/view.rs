@@ -5,10 +5,10 @@ use std::marker::PhantomData;
 use webplatform::{self, HtmlNode};
 use uuid::Uuid;
 
-use {Queryable, HasBind, Renderable, Event, EventType, AppContext, Node};
+use {Queryable, Component, HasBind, Renderable, Event, EventType, AppContext, Node};
 
 
-pub struct View<'doc, R> {
+pub struct View<'doc, R: 'static + Renderable> {
     app: Rc<AppState<'doc>>,
     node: Rc<HtmlNode<'doc>>,
     key: String,
@@ -145,8 +145,8 @@ impl<'doc, R: 'static + Renderable> Queryable<'doc> for View<'doc, R> {
         })
     }
 
-    fn bind<RR>(&self, el: &str, component: RR) -> View<'doc, RR>
-        where RR: 'static + Renderable
+    fn bind<RR>(&self, el: &str, component: RR)
+        where RR: 'static + Component
     {
         let node = self.node.element_query(el).expect("querySelect returned no result");
         let rc_node = Rc::new(node);
@@ -157,14 +157,8 @@ impl<'doc, R: 'static + Renderable> Queryable<'doc> for View<'doc, R> {
         rc_node.html_patch(&component.render(&render_node, &app_context));
 
         let binding = self.app.insert_binding(&key, component, rc_node.clone());
-
-        View {
-            app: self.app.clone(),
-            node: rc_node,
-            binding: binding,
-            key: key.to_owned(),
-            phantom: PhantomData,
-        }
+        let view: View<RR> = View::new(self.app.clone(), rc_node, key, binding);
+        Component::onload(&view);
     }
 }
 
@@ -183,3 +177,12 @@ impl<'doc, R: 'static + Renderable> HasBind<'doc> for View<'doc, R> {
         RefMut::map(self.binding.borrow_mut(), |r| r.component_mut())
     }
 }
+
+// TODO: bring this back different drop behavior - probably some sort of `RegisteredView`
+//    because `View<R>` gets created for Component::onload and by default shouldn't get dropped
+//    `RegisteredView` would be more useful for building things like routers
+// impl<'doc, R: 'static + Renderable> Drop for View<'doc, R> {
+//     fn drop(&mut self) {
+//         self.app.remove_binding::<R>(&self.key);
+//     }
+// }

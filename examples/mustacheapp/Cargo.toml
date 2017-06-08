@@ -5,4 +5,5 @@ authors = ["Anthony Nowell <anowell@gmail.com>"]
 
 [dependencies]
 rustc-serialize = "0.3.18"
+mustache = "0.8.0"
 quasar = { path = "../.." }

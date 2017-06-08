@@ -1,6 +1,7 @@
 use quasar::*;
 
-struct CounterData {
+#[derive(Default)]
+pub struct CounterData {
     count: u32,
 }
 
@@ -13,13 +14,10 @@ impl Renderable for CounterData {
     }
 }
 
-pub fn init(app: &QuasarApp) {
-    let component = CounterData {
-        count: 0
-    };
-
-    app.bind("#counter", component)
-        .on_each(EventType::Click, "button", |mut evt| {
+impl Component for CounterData {
+    fn onload(view: &View<Self>) {
+        view.on_each(EventType::Click, "button", |mut evt| {
             evt.binding.data_mut().count += 1;
         });
+    }
 }

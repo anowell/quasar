@@ -5,9 +5,6 @@ extern crate uuid;
 #[macro_use]
 extern crate downcast_rs;
 
-#[cfg(feature = "mustache")]
-extern crate mustache;
-
 mod events;
 mod components;
 mod state;
@@ -16,7 +13,7 @@ mod view;
 mod app;
 
 pub use events::EventType;
-pub use components::{Component, Properties, Renderable};
+pub use components::{Properties, Renderable};
 pub use app::{init, QuasarApp, AppContext};
 pub use node::Node;
 pub use view::View;
@@ -86,6 +83,10 @@ fn lookup_props<'doc>(node: &HtmlNode<'doc>, keys: &[&'static str]) -> Propertie
     props
 }
 
+pub trait Component: Renderable + Sized {
+    fn onload(view: &View<Self>);
+}
+
 
 pub trait Queryable<'doc> {
     type Q: Queryable<'doc>;
@@ -93,7 +94,7 @@ pub trait Queryable<'doc> {
     fn query(&self, el: &str) -> Option<Self::Q>;
     // fn query_all(&self, el: &str) -> Vec<Self>
 
-    fn bind<R>(&self, el: &str, component: R) -> View<'doc, R> where R: 'static + Renderable;
+    fn bind<R>(&self, el: &str, component: R) where R: 'static + Component;
     // fn bind_each(&self, el: &str, component: Vec<R>) -> BindEachNode<'doc, R>;
 }
 

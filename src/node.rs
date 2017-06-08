@@ -3,7 +3,7 @@ use std::rc::Rc;
 use webplatform::{self, HtmlNode};
 use uuid::Uuid;
 
-use {Queryable, Renderable, Properties, Event, EventType, View, AppContext, lookup_props};
+use {Queryable, Component, Properties, Event, EventType, View, AppContext, lookup_props};
 
 pub struct Node<'doc> {
     app: Rc<AppState<'doc>>,
@@ -23,8 +23,8 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
         })
     }
 
-    fn bind<RR>(&self, el: &str, component: RR) -> View<'doc, RR>
-        where RR: 'static + Renderable
+    fn bind<RR>(&self, el: &str, component: RR)
+        where RR: 'static + Component
     {
         let node = self.node.element_query(el).expect("querySelector found no results");
         let rc_node = Rc::new(node);
@@ -36,8 +36,8 @@ impl<'doc> Queryable<'doc> for Node<'doc> {
         rc_node.html_patch(&component.render(&render_node, &app_context));
 
         let binding = self.app.insert_binding(&key, component, rc_node.clone());
-
-        View::new(self.app.clone(), rc_node, key, binding)
+        let view = View::new(self.app.clone(), rc_node, key, binding);
+        RR::onload(&view);
     }
 }
 

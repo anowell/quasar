@@ -1,12 +1,15 @@
 use quasar::*;
+use helper::RuntimeComponent;
 
 #[derive(Debug, RustcEncodable)]
-struct HelloData {
+pub struct HelloData {
     name: String,
 }
 
-pub fn init(app: &QuasarApp) {
-    let component = Component {
+type HelloComponent = RuntimeComponent<HelloData, ::mustache::Template>;
+
+pub fn init() -> HelloComponent  {
+    RuntimeComponent {
         data: HelloData {
             name: "world".to_owned()
         },
@@ -17,10 +20,14 @@ pub fn init(app: &QuasarApp) {
             <div><input id="name-field" value="{{name}}"></div>
             <div>Hello, {{name}}.</div>
         "##).expect("failed to compile hello template")
-    };
+    }
+}
 
-    app.bind("#hello", component)
-        .on_each(EventType::Input, "#name-field", |mut evt| {
+
+impl Component for HelloComponent {
+    fn onload(view: &View<Self>) {
+        view.on_each(EventType::Input, "#name-field", |mut evt| {
             evt.binding.data_mut().name = evt.target.get("value");
         });
+    }
 }

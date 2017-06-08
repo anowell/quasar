@@ -41,20 +41,21 @@ A basic example might include an HTML file like this:
 You can bind and update data with a snippet like this:
 
 ```rust
-#[derive(BartDisplay)]
+#[derive(Default, BartDisplay)]
 #[template_string = "<p>Count: {{count}}</p><button>+1</button>"]
 struct CounterData { count: u32 }
 
+impl Component for CounterData {
+    fn onload(view: &View<Self>) {
+        view.on_each(EventType::Click, "button", |mut evt| {
+              evt.binding.data_mut().count += 1;
+        });
+    }
+}
+
 fn main() {
     let mut app = quasar::init();
-
-    let component = CounterData { count: 0 };
-    app.bind("#counter", component)
-        .query("button").unwrap()
-        .on(EventType::Click, |mut evt| {
-            evt.binding.data_mut().count += 1;
-        });
-
+    app.bind("#counter", CounterData::default());
     app.spin();
 }
 ```

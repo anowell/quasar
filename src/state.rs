@@ -166,6 +166,12 @@ impl<'doc> AppState<'doc> {
         rc_binding
     }
 
+    pub fn remove_binding<R: 'static + Renderable>(&self, key: &str) -> Option<Rc<RefCell<Binding<'doc>>>> {
+        let mut bindings = self.bindings.borrow_mut();
+        let view_id = TypedKey::new::<R>(key);
+        bindings.remove(&view_id)
+    }
+
     pub fn enqueue_render(&self, view_id: TypedKey) {
         let mut queue = self.render_queue.borrow_mut();
         queue.push(view_id);
@@ -182,7 +188,13 @@ impl<'doc> AppState<'doc> {
         println!("Processing render queue (len={})", queue.len());
         let bindings = self.bindings.borrow();
         for view_id in queue.iter() {
-            let binding = bindings.get(&view_id).expect("failed to get binding for view");
+            let binding = match bindings.get(&view_id) {
+                Some(b) => b,
+                None => {
+                    // TODO: removed dropped event handlers
+                    return println!("failed to get binding for view (probably zombie handler)");
+                }
+            };
             let binding = binding.borrow();
             let ref component = binding.component;
 

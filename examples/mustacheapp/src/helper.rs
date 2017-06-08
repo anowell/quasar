@@ -1,10 +1,32 @@
 use mustache::{encoder, Data, Template};
 use rustc_serialize::Encodable;
 use std::collections::HashMap;
-use {Node, AppContext};
-use super::{Component, Renderable};
+use std::ops::{Deref, DerefMut};
+use quasar::{Node, AppContext};
+use quasar::Renderable;
 
-impl<D: 'static + Encodable> Renderable for Component<D, Template> {
+/// Helper type for runtime templating
+#[derive(Debug)]
+pub struct RuntimeComponent<D, T> {
+    pub data: D,
+    pub template: T,
+    pub props: Vec<&'static str>,
+}
+
+impl<D, T> Deref for RuntimeComponent<D, T> {
+    type Target = D;
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<D, T> DerefMut for RuntimeComponent<D, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
+}
+
+impl<D: 'static + Encodable> Renderable for RuntimeComponent<D, Template> {
     fn render<'doc>(&self, node: &Node, _app: &AppContext) -> String {
         let mut data = encoder::encode(&self.data).unwrap_or_else(|err| {
             println!("Failed to encode component data. {}. Using empty hash", err);
@@ -28,3 +50,4 @@ impl<D: 'static + Encodable> Renderable for Component<D, Template> {
         String::from_utf8_lossy(&output).into_owned()
     }
 }
+

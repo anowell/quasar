@@ -3,7 +3,7 @@ use std::rc::Rc;
 use webplatform;
 use uuid::Uuid;
 
-use {Queryable, Renderable, View, Node};
+use {Queryable, Component, View, Node};
 
 /// The main app object instantiated by calling `quasar::init()`
 pub struct QuasarApp<'doc> {
@@ -93,7 +93,7 @@ impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
         })
     }
 
-    fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> View<'doc, R> {
+    fn bind<R: 'static + Component>(&self, el: &str, component: R) {
         let node = self.app.document.element_query(el).expect("querySelector found no results");
         let rc_node = Rc::new(node);
 
@@ -104,8 +104,8 @@ impl<'doc> Queryable<'doc> for QuasarApp<'doc> {
         rc_node.html_patch(&component.render(&render_node, &app_context));
 
         let binding = self.app.insert_binding(&key, component, rc_node.clone());
-
-        View::new(self.app.clone(), rc_node, key, binding)
+        let view: View<R> = View::new(self.app.clone(), rc_node, key, binding);
+        Component::onload(&view);
     }
 }
 
@@ -117,7 +117,7 @@ impl<'doc> Queryable<'doc> for AppContext<'doc> {
         })
     }
 
-    fn bind<R: 'static + Renderable>(&self, el: &str, component: R) -> View<'doc, R> {
+    fn bind<R: 'static + Component>(&self, el: &str, component: R) {
         let node = self.app.document.element_query(el).expect("querySelector found no results");
         let rc_node = Rc::new(node);
 
@@ -128,7 +128,7 @@ impl<'doc> Queryable<'doc> for AppContext<'doc> {
         rc_node.html_patch(&component.render(&render_node, &app_context));
 
         let binding = self.app.insert_binding(&key, component, rc_node.clone());
-
-        View::new(self.app.clone(), rc_node, key, binding)
+        let view: View<R> = View::new(self.app.clone(), rc_node, key, binding);
+        Component::onload(&view);
     }
 }

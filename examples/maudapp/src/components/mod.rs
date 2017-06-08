@@ -3,11 +3,13 @@ mod counter;
 // mod cat_list;
 mod todo;
 
-use quasar::QuasarApp;
+use quasar::{QuasarApp, Queryable};
+use self::todo::TodoList;
+use self::counter::CounterData;
 
 pub fn init(app: &QuasarApp) {
     // hello::init(&app);
-    counter::init(&app);
     // cat_list::init(&app);
-    todo::init(&app);
+    app.bind("#counter", CounterData::default());
+    app.bind("#todo-list", TodoList::default());
 }
