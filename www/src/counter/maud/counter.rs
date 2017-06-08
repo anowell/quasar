@@ -1,5 +1,6 @@
 use quasar::*;
 
+#[derive(Default)]
 pub struct CounterData {
     pub count: u32,
 }

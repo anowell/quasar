@@ -1,15 +1,13 @@
 use quasar::*;
 
-#[derive(BartDisplay)]
+#[derive(Default, BartDisplay)]
 #[template = "src/counter/bart/counter.html"]
-struct CounterData { count: u32 }
+pub struct CounterData { count: u32 }
 
-pub fn init(app: &QuasarApp) {
-    let component = CounterData { count: 0 };
-
-    app.bind("#counter-bart", component)
-        .query("button").unwrap()
-        .on(EventType::Click, |mut evt| {
+impl Component for CounterData {
+    fn onload(view: &View<Self>) {
+        view.on_each(EventType::Click, "button", |mut evt| {
             evt.binding.data_mut().count += 1;
         });
+    }
 }

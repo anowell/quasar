@@ -1,12 +1,13 @@
 use quasar::*;
 
-#[derive(Debug, RustcEncodable)]
+#[derive(Debug, Default, RustcEncodable)]
 struct CounterData {
     count: u32,
 }
 
-pub fn init(app: &QuasarApp) {
-    let component = Component {
+type CounterComponent = RuntimeComponent<CounterData, ::mustache::Template>;
+pub fn init() -> CounterComponent {
+    let component = RuntimeComponent {
         data: CounterData { count: 0 },
         props: vec![],
         template: compile_str(r##"
@@ -14,10 +15,12 @@ pub fn init(app: &QuasarApp) {
             <button>+1</button>
         "##).expect("failed to compile counter template")
     };
+}
 
-    let view = app.bind("#counter", component);
-
-    view.on_each(EventType::Click, "button", |mut evt| {
-        evt.binding.data_mut().count += 1;
-    });
+impl Component for CounterComponent {
+    fn onload(view: &View<Self>) {
+        view.on_each(EventType::Click, "button", |mut evt| {
+            evt.binding.data_mut().count += 1;
+        });
+    }
 }

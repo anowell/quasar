@@ -5,8 +5,8 @@ authors = ["Anthony Nowell <anowell@gmail.com>"]
 
 [dependencies]
 rustc-serialize = "0.3.18"
-maud = "0.16.0"
-maud_macros = "0.16.0"
+maud = { version = "0.16.2", optional = true }
+maud_macros = { version = "0.16.2", optional = true }
 
 [dependencies.bart]
 git = "https://github.com/maghoff/bart"
@@ -17,3 +17,8 @@ git = "https://github.com/maghoff/bart"
 [dependencies.quasar]
 version = "*"
 path = ".."
+
+
+[features]
+default = []
+with-maud = ["maud", "maud_macros"]

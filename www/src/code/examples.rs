@@ -54,6 +54,10 @@ impl Renderable for Example {
     }
 }
 
+impl Component for Example {
+    fn onload(view: &View<Self>) {}
+}
+
 
 #[derive(BartDisplay)]
 #[template = "src/code/code.html"]

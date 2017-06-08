@@ -4,6 +4,14 @@ pub struct TodoList {
     pub items: Vec<TodoItem>,
 }
 
+impl TodoList {
+    pub fn new() -> TodoList {
+        TodoList {
+            items: vec![TodoItem::new("Blog about Quasar")]
+        }
+    }
+}
+
 pub struct TodoItem {
     pub label: String,
     pub complete: bool,

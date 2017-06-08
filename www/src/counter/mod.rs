@@ -1,3 +1,3 @@
 pub mod bart;
-pub mod maud;
-pub mod mustache;
+#[cfg(feature="with-maud")] pub mod maud;
+// pub mod mustache;
