@@ -18,12 +18,12 @@ impl Renderable for TodoList {
             ul id="todo-ul" {
                 @for item in &self.items {
                     li class={ "todo-item " (item.complete) } {
-                        input type="checkbox" checked?[item.complete] /
+                        input type="checkbox" checked?[item.complete]
                         (item.label)
                     }
                 }
             }
-            input id="message" type="text" /
+            input id="message" type="text"
             button { "Add" }
         }).into_string()
     }
@@ -31,9 +31,6 @@ impl Renderable for TodoList {
 
 impl Component for TodoList {
     fn onload(view: &View<Self>) {
-        // TODO: use view.query("button").on(...)
-        // but since we don't patch the DOM yet, the attached element
-        // is always destroyed, so we need to attach the event to a nested selector fo now
         view.on_each(EventType::Click, "button", |mut evt| {
             match evt.binding.query("#message") {
                 Some(node) => {
